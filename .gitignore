@@ -105,3 +105,6 @@ venv.bak/
 
 # backup
 *~
+
+# output
+output/*

@@ -1,0 +1,6 @@
+#
+#
+#
+DATE1      DATE2        APP_RATE NAP_RATE N_RESP
+2019-02-03 2019-02-04   78       90      100    N_RESP ‚Í Number of response
+2019-01-02 2019-01-03   12       34       56    N_RESP ‚Í Number of response
