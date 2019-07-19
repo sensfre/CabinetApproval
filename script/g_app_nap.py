@@ -89,8 +89,8 @@ def options():
                 help='グラフのファイル出力')
     opt.add_argument('-f', dest='gout_folder', default='../output',
                 help='グラフの出力先フォルダ (../output)')
-    opt.add_argument('-n', dest='gout_ndx', type=int, default=3,
-                help='グラフの(先頭)図番号 Fig# (3)')
+    opt.add_argument('-n', dest='gout_ndx', type=int, default=10,
+                help='グラフの(先頭)図番号 Fig# (10)')
     
     # APP -- NAP グラフ
     opt.add_argument('-r', dest='xy_range', default="30:60",

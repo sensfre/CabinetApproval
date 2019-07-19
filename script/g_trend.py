@@ -153,7 +153,7 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
         t.set_size(14)
 	
     if args.gout:
-        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout + 2, cfg['gout_date'])))
+        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout + 1, cfg['gout_date'])))
     
     print('3', pp3_buf['APP_RATE'][-1], pp3_buf['NAP_RATE'][-1])
     print('2', pp2_buf['APP_RATE'][-1], pp2_buf['NAP_RATE'][-1])
@@ -178,7 +178,7 @@ def proc_yn(pp2, pp3, ppj):
     ax.set_ylabel('支持率 + 不支持率 [%]', fontsize=14)
     
     if args.gout:
-        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 6, cfg['gout_date'])))
+        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 4, cfg['gout_date'])))
     
     
 def proc_fc(fc_dict, pp2, pp3, ppj):
@@ -296,7 +296,7 @@ def options():
     opt : ArgumentParser() インスタンス
     
     """
-    opt = argparse.ArgumentParser(description='最新の支持率-不支持率 ２次元プロット')
+    opt = argparse.ArgumentParser(description='2グループに分けて支持率を追う')
     
     # DB
     opt.add_argument('-d', dest='db_folder', default='../data',
@@ -412,9 +412,9 @@ def main():
             
             if args.gout:
                 if yn == 'APP_RATE':
-                    fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 3, cfg['gout_date'])))
+                    fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
                 else:
-                    fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 4, cfg['gout_date'])))
+                    fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 3, cfg['gout_date'])))
     
     if 1:
         proc_yn(pp2, pp3, ppj)
