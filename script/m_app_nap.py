@@ -30,7 +30,7 @@ def options():
     opt : ArgumentParser() インスタンス
     
     """
-    opt = argparse.ArgumentParser(description='最新の支持率-不支持率 ２次元プロット')
+    opt = argparse.ArgumentParser(description='動画 支持率-不支持率 ２次元プロット')
     
     # DB
     opt.add_argument('-d', dest='db_folder', default='../data',
