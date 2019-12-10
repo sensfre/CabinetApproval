@@ -29,6 +29,7 @@ def proc_last(pp2, pp3, ppj):
     """
     args = cfg['args']
     xymin, xymax = [int(a) for a in args.xy_range.split(':')] # X軸,Y軸の範囲(X,Y 共通)
+    xoff, yoff = [float(a) for a in args.label_offset.split(':')] # ラベルのオフセット
     
     fig = plt.figure(figsize=(4.8*(1800/1012), 4.8))
     fig.subplots_adjust(left=0.02, bottom=0.13, right=0.9, top=0.88)
@@ -56,7 +57,8 @@ def proc_last(pp2, pp3, ppj):
             s = '%s %s' % (p.label, dt_fm_sn(p.db['T'][-1]).strftime('%m/%d'))
             ax.plot(xx, yy, '-', lw=1, color=col, alpha=0.4)
             ax.plot(xx[-1], yy[-1], p.marker, ms=6, alpha=0.9, label=s)
-            ax.text(xx[-1]+0.2, yy[-1]+0.4, p.label, fontsize=10, alpha=0.8)
+            # ax.text(xx[-1]+0.2, yy[-1]+0.4, p.label, fontsize=10, alpha=0.8)
+            ax.text(xx[-1]+xoff, yy[-1]+yoff, p.label, fontsize=10, alpha=0.8)
             
     ax.plot([0,100], [0,100], '--', alpha=0.5)
     ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))
@@ -95,6 +97,8 @@ def options():
     # APP -- NAP グラフ
     opt.add_argument('-r', dest='xy_range', default="30:60",
                 help='X軸, Y軸のレンジ (30:60)')
+    opt.add_argument('-l', dest='label_offset', default="-2.3:-0.3",
+                help='ラベルのオフセット (-2.3:-0.3)')
     opt.add_argument('-t', dest='trimday', default=None,
                 help='直近 n 日の結果を抽出 (-t14 for last 2 weeks)') 
     
