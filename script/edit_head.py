@@ -45,13 +45,13 @@ def main():
     # 最新動向をコピペ(縮小)
     #
     im_last = Image.open(os.path.join(args.gout_folder, 'Fig10_%s.png' % cfg['gout_date']))
-    im = im_last.crop((40, 0, 482, 472))   # (442 x 472) 
+    im = im_last.crop((40+105, 0, 482+105, 472))   # (442 x 472) 
     im = im.resize((int(442*0.95), int(472*0.95)), resample=Image.BILINEAR)
     im_base.paste(im, (x_last, 0))
     
     # 最新動向の凡例をコピペ
     #
-    im = im_last.crop((492, 53, 618, 297))
+    im = im_last.crop((585, 53, 700, 297))
     im_base.paste(im, (x_last - 120, 47+8))
     
     # 透過属性ありの draw を使って グループ H/L をハッチング
