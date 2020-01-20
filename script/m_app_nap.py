@@ -75,7 +75,7 @@ class UPDATE:
         # 評価日時 (10 日毎)
         self.t0 = sn_fm_dt(d0)
         self.tf = max(t_max(self.pp2), t_max(self.pp3), t_max(self.ppj)) + 10
-        self.tt = [a for a in range(int(self.t0), int(self.tf), 10)] + [int(self.tf)]*6  # 終端に tf を 6 回繰り返し。
+        self.tt = [a for a in range(int(self.t0), int(self.tf), 10)] + [int(self.tf)]*10  # 終端に tf を 10 回繰り返し。
         
         # figure & axis 生成
         #
