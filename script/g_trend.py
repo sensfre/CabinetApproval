@@ -350,7 +350,7 @@ def main():
     
     # DB 読み込み
     #   DB の読み込み日付の指定.
-    #   ma_days [day] 感度解析のウィンドウ(+/-ma_days のデータから感度を求める)
+    #   ma_days [day] 感度解析のウィンドウ(直近 ma_days のデータから感度求める)
     #
     args = cfg['args']
     d0 = _d(args.db_begin)

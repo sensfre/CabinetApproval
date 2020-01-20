@@ -5,7 +5,7 @@ from polldb import MA, DB
 
 def db_defs(d0, df, data_folder, ma_days):
     
-    MA.set_window(ma_days, ma_days) # 長期移動平均のウィンドウ [days]
+    MA.set_window(ma_days, 0) # 長期移動平均のウィンドウ [days]
     
     DB.set_span(d0, df) # 解析期間
     DB.set_data_folder(data_folder) # データフォルダー
