@@ -17,7 +17,7 @@ def t_max(pp):
 def t_min(pp):
     return min([min(p.db['T']) for p in pp])
     
-def load_reverse(fn):
+def load_sorted(fn):
     """ 支持率/不支持率の読み込み。
     Parameters
     ----------
@@ -29,20 +29,17 @@ def load_reverse(fn):
     
     Notes
     -----
-    入力は日付の降順を仮定し、本ルーチンで昇順に直す。
-    reverse しているが、日付でソートした方が良さそう。
+    各リストは日付順にソートしている
     
     """
-    def _r(s):
-        return np.array([a for a in reversed(s)])
-        
     data, names_ = fileio.load_core(fn)
     names = [_ for _ in names_ if _[:4] != 'DATE']
+    data = data[np.argsort(data['DATE1'])] # 日付でソート
+    
     t1 = [fileio.sn_fm_dt(_) for _ in data['DATE1']]
     t2 = [fileio.sn_fm_dt(_) for _ in data['DATE2']]
-    
-    buf = {k:_r(data[k]) for k in names}
-    buf['T'] = _r([(a + b)/2 for (a, b) in zip(t1, t2)])
+    buf = {k:data[k] for k in names}
+    buf['T'] = np.array([(a + b)/2 for (a, b) in zip(t1, t2)])
     return buf
     
 class DB:
@@ -89,7 +86,7 @@ class DB:
         self.interp = {k:interp(self.db['T'], self.db[k]) for k in self.db} # 直線補間
 
     def load(self, fn):
-        a = load_reverse(os.path.join(self.data_folder, fn)) # T Y N
+        a = load_sorted(os.path.join(self.data_folder, fn)) # T Y N
         ndx = (a['T'] >= fileio.sn_fm_dt(self.t0)) & (a['T'] <= fileio.sn_fm_dt(self.tf))
         buf = {k: a[k][ndx] for k in a}
         return buf
