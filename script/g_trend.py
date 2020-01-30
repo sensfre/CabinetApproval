@@ -158,6 +158,129 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     print('3', pp3_buf['APP_RATE'][-1], pp3_buf['NAP_RATE'][-1])
     print('2', pp2_buf['APP_RATE'][-1], pp2_buf['NAP_RATE'][-1])
     
+def proc_summary2(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
+    args = cfg['args']
+    
+    flg_jnn = False
+    
+    dd2 = [dt_fm_sn(a) for a in tt2]
+    dd3 = [dt_fm_sn(a) for a in tt3]
+    ddj = [dt_fm_sn(a) for a in ttj]
+    
+    fig, ax1 = plt.subplots()
+    fig.subplots_adjust(left=0.16, right=0.86, bottom=0.15)
+    
+    cy = 'darkorange'
+    cy2 = 'orangered'
+    cn = 'skyblue'
+    cn2 = 'darkcyan'
+    
+    ax = ax1
+    ax.set_ylim([0, 100])
+    ax.set_xlim(dt_fm_sn(min(tt2[0],tt3[0])), dt_fm_sn(30 + max(tt2[-1],tt3[-1])))
+    
+    k = 'APP_RATE'
+    fc2 = interp(tt2, pp2_buf[k])
+    fc3 = interp(tt3, pp3_buf[k])
+    n2, n3 = 4, 5
+    m2 = np.mean(pp2_buf[k])
+    m3 = np.mean(pp3_buf[k])
+    ma = (n2*m2 + n3*m3)/(n2 + n3)
+    f2 = m2/ma
+    f3 = m3/ma
+    tta = np.arange(tt2[0], max(tt3[-1], tt2[-1]), 1)
+    dda = [dt_fm_sn(a) for a in tta]
+    ppa = [(fc2(t)/f2 + fc3(t)/f3)/2 for t in tta]
+
+    #ax.plot(dd2, pp2_buf[k], label='pp2', alpha = 0.1)
+    #ax.plot(dd3, pp3_buf[k], label='pp3', alpha = 0.1)
+
+    pp2c_ = [fc2(t)/f2 for t in tta]
+    pp3c_ = [fc3(t)/f3 for t in tta]
+    # ax.fill_between(dda, pp2c_, pp3c_, color=cy, alpha=0.2)
+    ax.plot(dda, pp2c_, linestyle='dotted', color=cy, label="H'")
+    ax.plot(dda, pp3c_, linestyle='dashed', color=cy, label="L'")
+    ax.plot(dda, ppa, color=cy, label='グループHとLの\n加重平均')
+    
+    ax.tick_params(axis='y', colors=cy2)
+    ax.set_yticks(range(0, 51, 10))
+    ax.text(datetime(2016, 9, 1), 25, '支持する', color=cy2, fontsize=20)
+    ax.set_ylabel('内閣を支持する [%]', color=cy2, fontsize=14)
+
+    ax.yaxis.set_label_coords(-0.08, 0.3)
+    ax.legend(loc='upper left', bbox_to_anchor=(0.63, 0.15))
+    
+    ax2 = ax1.twinx()
+    ax = ax2
+    ax.xaxis_date()
+    ax.set_ylim([100, 0])
+    
+    k = 'NAP_RATE'
+    fc2 = interp(tt2, pp2_buf[k])
+    fc3 = interp(tt3, pp3_buf[k])
+    n2, n3 = 4, 5
+    m2 = np.mean(pp2_buf[k])
+    m3 = np.mean(pp3_buf[k])
+    ma = (n2*m2 + n3*m3)/(n2 + n3)
+    f2 = m2/ma
+    f3 = m3/ma
+    tta = np.arange(tt2[0], max(tt3[-1], tt2[-1]), 1)
+    dda = [dt_fm_sn(a) for a in tta]
+    ppa = [(fc2(t)/f2 + fc3(t)/f3)/2 for t in tta]
+    
+    pp2c_ = [fc2(t)/f2 for t in tta]
+    pp3c_ = [fc3(t)/f3 for t in tta]
+    #ax.fill_between(dda, pp2c_, pp3c_, color=cn, alpha=0.5)
+    ax.plot(dda, pp2c_, linestyle='dotted', color=cn, label="H'")
+    ax.plot(dda, pp3c_, linestyle='dashed', color=cn, label="L'")
+    ax.plot(dda, ppa, color=cn, label='グループHとLの\n加重平均')
+    
+    ax.tick_params(axis='y', colors=cn2)
+    ax.set_yticks(range(0, 51, 10))
+    ax.text(datetime(2016, 8, 1), 20, '支持しない', color=cn2, fontsize=20)
+    ax.set_ylabel('内閣を支持しない [%]', color=cn2, fontsize=14)
+    ax.yaxis.set_label_coords(1.08, 0.7)
+    ax.legend(loc='upper left', bbox_to_anchor=(0.63, 0.95))
+    
+    set_date_tick(ax1, (1, 7), '%Y/%m', 30)
+    ax1.grid(which='both')
+    ax2.grid(which='both')
+    ax1.grid(which='minor', alpha=0.1)
+    ax2.grid(which='minor', alpha=0.1)
+
+    bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
+    fig.text(0.19, 0.23, "グループ H: 読売/日経/共同/FNN の平均", fontsize=8) #, bbox=bbox)
+    fig.text(0.19, 0.19, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=8) #, bbox=bbox)
+    fig.text(0.19, 0.16, "平均は指数移動平均(時定数 %d 日)"%args.k_days, fontsize=8) #, bbox=bbox)
+    
+    if args.gout:
+        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
+    
+    fig = plt.figure(figsize=(4, 4))
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
+    ax = fig.add_subplot(1,1,1)
+    n3=pp3_buf['NAP_RATE'][-1]
+    n2=pp2_buf['NAP_RATE'][-1]
+    y2=pp2_buf['APP_RATE'][-1]
+    y3=pp3_buf['APP_RATE'][-1]
+    dd = [n3, n2-n3, 100-n2-y2, y2-y3, y3]
+    cc = [cn, 'royalblue', '0.3', 'tomato', cy]
+    ll = ['支持しない', 'やや', '他', 'やや', '支持する']
+    ll = ['', 'やや', '他', 'やや', '']
+    patches, texts = ax.pie(dd, labels=ll, counterclock=False, startangle=90,
+        colors=cc, labeldistance=0.7,
+        textprops={'color':'white'},
+        radius=1.23)
+    ax.text(  0.6, 0.02, '支持しない', fontsize=24, color='white', horizontalalignment='center')
+    ax.text( -0.6, 0.02, '支持する',   fontsize=24, color='white', horizontalalignment='center')
+    for t in texts:
+        t.set_horizontalalignment('center')
+        t.set_size(14)
+	
+    if args.gout:
+        fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout + 1, cfg['gout_date'])))
+    
+    
 def proc_yn(pp2, pp3, ppj):
     args = cfg['args']
     
@@ -391,10 +514,13 @@ def main():
         ppj_buf[k] = calc_mav(fc_dict, k, ttj, ppj, w_days=30, k_days=args.k_days)
         ppj_func[k] = interp(ttj, ppj_buf[k])
     
-    if 1:
+    if 0:
         proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf)
     
     if 1:
+        proc_summary2(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf)
+    
+    if 0:
         # 公表値/補正値/残差
         for yn in ['APP_RATE', 'NAP_RATE']:
             fig, axes = plt.subplots(3, 2, figsize=(10, 7))
@@ -416,13 +542,13 @@ def main():
                 else:
                     fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 3, cfg['gout_date'])))
     
-    if 1:
+    if 0:
         proc_yn(pp2, pp3, ppj)
         
-    if 1:
+    if 0:
         proc_fc(fc_dict, pp2, pp3, ppj)
         
-    if 1:
+    if 0:
         proc_hilo(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf)
     
     # 表示
