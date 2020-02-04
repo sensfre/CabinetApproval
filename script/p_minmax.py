@@ -1,44 +1,33 @@
-import glob
 import os
+import glob
+from fileio import load_core
 import numpy as np
 
-def load(fn):
-    f = open(fn)
-    buf = []
-    while 1:
-        xx = f.readline()
-        if not xx: break
-        if xx == '': continue
-        x = xx.strip().split()
-        if xx[0] == '#': continue
-        if (x[0].strip())[:4] == 'DATE': continue
-        buf.append([x[0], x[1], float(x[2]), float(x[3])])
-    return np.array(buf)
-    
-def sub(fn, yn, mm):
-    ndx = {'Y':2, 'N':3}[yn]
-    aa = load(fn)
-    rr = aa[:, ndx]
+def sub(fn, app_nap, mm):
+    data, names = load_core(fn)
     if mm == 'min':
-        j = rr.argmin()
+        j = data[app_nap].argmin()
     else:
-        j = rr.argmax()
-    print('%-12s %2d %-40s' % (os.path.basename(fn), j, aa[j]))
+        j = data[app_nap].argmax()
+    r = data[j]
+    d1 = r[0].strftime('%Y-%m-%d')
+    print('%-12s %2d %s %5.1f %5.1f %6.0f' % (
+        os.path.basename(fn), j, d1, r[2], r[3], r[4]))
     
-def proc(yn, mm):
+def proc(app_nap, mm):
     ff = glob.glob('f:/github/sensfre/CabinetApproval/data/*.txt')
-    print('%s  %s' % (yn, mm))
+    print('%s  %s' % (app_nap, mm))
     for f in ff:
         if os.path.basename(f)[:6] == 'sample':
             pass
         else:
-            sub(f, yn, mm)
+            sub(f, app_nap, mm)
     print()
     
 def main():
-    proc('N', 'min')
-    proc('N', 'max')
-    proc('Y', 'max')
-    proc('Y', 'min')
+    proc('NAP_RATE', 'min')
+    proc('NAP_RATE', 'max')
+    proc('APP_RATE', 'max')
+    proc('APP_RATE', 'min')
     
 main()
