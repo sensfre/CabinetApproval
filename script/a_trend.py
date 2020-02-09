@@ -307,12 +307,12 @@ def proc_factor_mav(ppa, k_app_nap, k_title):
         
     fig, axes = plt.subplots(5, 2, figsize=(10, 7))
     fig.text(0.20, 0.97, '報道各社の' + k_title, fontsize=16)
-    fig.text(0.55, 0.97, '(オレンジ:3ヵ月移動平均  ブルー:直近 6ヵ月移動平均)', fontsize=12)
+    fig.text(0.55, 0.97, '(オレンジ:3ヵ月移動平均  ブルー:6ヵ月移動平均)', fontsize=12)
     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.25, hspace=0.25)
     t0 = sn_fm_dt(_d(cfg['args'].db_begin))
     tf = t_max(ppa)
     
-    for ndx, m in enumerate([3, 6, 9]):  # window size (m-month)
+    for ndx, m in enumerate([3, 6]):  # window size (m-month)
         tt = np.arange(t0+6*30, tf, 7)
         ff = sub(tt, m*30)
         dd = [dt_fm_sn(a) for a in tt]
