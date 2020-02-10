@@ -219,128 +219,81 @@ def proc_mav_avg(fc_dict, ppa):
         ff = np.array([fc_dict['APP_RATE'][db.label](a) for a in db.db['T']])
         interp(db.db['T'], db.db['APP_RATE']/ff)
     
-def proc_factor_avg(ppa):
-    def sub(tt):
-        ans_t = []
-        ans_ff = []
-        for (tb, te) in zip(tt[:-1], tt[1:]):
-            aa = []
-            for pp in ppa:
-                tp = zip(pp.db['T'], pp.db['APP_RATE'])
-                tp_ = [b for a,b in tp if tb <= a <= te]
-                if len(tp_) >= 2:
-                    aa.append(np.mean(tp_))
-                else:
-                    aa.append(np.NaN)
-            aa_ = np.mean(aa)
-            ff = [a/aa_ for a in aa]
-            ans_t.append(te)
-            ans_ff.append(ff)
-        return ans_t, ans_ff
-        
-    fig, axes = plt.subplots(3, 1, figsize=(10, 7))
-    fig.subplots_adjust(left=0.1, bottom=0.1, right=0.85, top=0.95, wspace=0.44)
-    t0 = sn_fm_dt(_d(cfg['args'].db_begin))
-    tf = t_max(ppa)
-    for ndx, m in enumerate([3, 4, 6]):  # window size (m-month)
-        tt = np.arange(t0, tf, m*30)
-        ans_t, ans_ff = sub(tt)
-        ff = zip(*ans_ff)
-        d = [dt_fm_sn(a) for a in ans_t]
-        for f, p in zip(ff, ppa):
-            axes[ndx].step(d, f, where='pre', label=p.label)
-        axes[ndx].legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+def proc_factor_mav(db_list, k_app_nap, k_title):
+    """
+    Parameters
+    ----------
+    db_list, list of DB()
+    k_app_nap, string : 分析データキー ('APP_RATE' or 'NAP_RATE')
+    k_title, string : グラフタイトル
     
-    fig, axes = plt.subplots(5, 2, figsize=(10, 7))
-    fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.25, hspace=0.25)
-    t0 = sn_fm_dt(_d(cfg['args'].db_begin))
-    tf = t_max(ppa)
-
-    for ndx, m in enumerate([3, 6]):  # window size (m-month)
-        tt = np.arange(t0, tf, m*30)
-        ans_t, ans_ff = sub(tt)
-        ff = zip(*ans_ff)
-        d = [dt_fm_sn(a) for a in ans_t]
-        for j, (f, p) in enumerate(zip(ff, ppa)):
-            c, r = divmod(j, 5)
-            
-            tt = p.db['T']
-            dd = [dt_fm_sn(a) for a in tt]
-            oo = np.ones_like(tt)
-            axes[r,c].plot(dd, oo, 'o', ms=2, alpha=0.2)
-            
-            if ndx == 0:
-                axes[r,c].step(d, f, color='orange', lw=2, linestyle='dashed', where='pre')
-            else:
-                axes[r,c].step(d, f, color='blue', where='pre')
+    """
+    def _factor_mav(t_node, d_window):
+        """ 各社の感度を求める
         
-    for j, p in enumerate(ppa):
-        c, r = divmod(j, 5)
-        axes[r, c].set_ylabel(p.label)
-        axes[r, c].set_ylim(0.8, 1.25)
-        axes[r, c].grid(which='both')
-        axes[r, c].grid(which='minor', alpha=0.1)
-        if r != 4:
-            set_date_tick(axes[r,c], (1, 7), '%m', 0)
-        else:
-            set_date_tick(axes[r,c], (1, 7), '%Y/%m', 30)
-
-def proc_factor_mav(ppa, k_app_nap, k_title):
-    def sub(t_node, d_window):
-        def sub_ma(p):
-            def one_point(t):
-                ndx = (t - d_window <= p.db['T']) & (p.db['T'] <= t)
-                y_ = p.db[k_app_nap][ndx]
-                if len(y_) >= 2:
-                    ans = np.mean(y_)
-                else:
-                    ans = np.NaN
-                return ans
-            return [one_point(t) for t in t_node]
-        yy = [sub_ma(p) for p in ppa]
-        ya = []
-        for y in zip(*yy):
-            # y_ = [a for a in y if a != np.nan]  # BUGS ?
-            ya.append(np.nanmean(y))
-        ff = [[_/a for _,a in zip(y, ya)] for y in yy]
+        Parameters
+        ----------
+        t_node, 1d-array : 感度係数を求める日付のリスト
+        d_window, float [day] : 移動平均の窓幅 (過去 d_window 日に含まれる調査の平均を求める)
+        
+        Note
+        ----
+        ウィンドウ内の調査結果が 2 個未満の時は、感度の値を nan にする。
+        
+        """
+        def _mav(db, t):
+            ndx = (t - d_window <= db.db['T']) & (db.db['T'] <= t)
+            y_ = db.db[k_app_nap][ndx]
+            if len(y_) >= 2:
+                ans = np.mean(y_)
+            else:
+                ans = np.NaN
+            return ans
+        
+        yy = [[_mav(db, t) for t in t_node] for db in db_list]
+        ya = [np.nanmean(a) for a in zip(*yy)]
+        ff = [[a/b for a,b in zip(y, ya)] for y in yy]
         return ff
         
+    # 図の準備
     fig, axes = plt.subplots(5, 2, figsize=(10, 7))
-    fig.text(0.20, 0.97, '報道各社の' + k_title, fontsize=16)
-    fig.text(0.55, 0.97, '(オレンジ:3ヵ月移動平均  ブルー:6ヵ月移動平均)', fontsize=12)
+    fig.text(0.10, 0.97, k_title, fontsize=16)
+    fig.text(0.60, 0.97, '(オレンジ:3ヵ月移動平均  ブルー:6ヵ月移動平均)', fontsize=12)
     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.25, hspace=0.25)
-    t0 = sn_fm_dt(_d(cfg['args'].db_begin))
-    tf = t_max(ppa)
     
+    # 分析期間
+    t0 = sn_fm_dt(_d(cfg['args'].db_begin))
+    tf = t_max(db_list)
+    
+    # 窓幅をいくつか選んで感度のトレンドを描画(調査会社毎)
     for ndx, m in enumerate([3, 6]):  # window size (m-month)
-        tt = np.arange(t0+6*30, tf, 7)
-        ff = sub(tt, m*30)
+        tt = np.arange(t0 + 6*30, tf, 7)
+        ff = _factor_mav(tt, m*30)
         dd = [dt_fm_sn(a) for a in tt]
-        for j, (f, p) in enumerate(zip(ff, ppa)):
+        for j, (f, db) in enumerate(zip(ff, db_list)):
             c, r = divmod(j, 5)
             if ndx == 0:
                 axes[r,c].plot(dd, f, color='orange', lw=2, alpha=0.8)
-            elif ndx == 1:
-                axes[r,c].plot(dd, f, color='blue')
             else:
-                axes[r,c].plot(dd, f, color='gray')
+                axes[r,c].plot(dd, f, color='blue')
         
-    for j, p in enumerate(ppa):
+    # タイトルや軸の設定
+    for j, db in enumerate(db_list):
         c, r = divmod(j, 5)
-        axes[r, c].set_ylabel(p.label)
+        axes[r, c].set_ylabel(db.label)
         axes[r, c].set_ylim(0.8, 1.3)
         axes[r, c].grid(which='both')
         axes[r, c].grid(which='minor', alpha=0.1)
-        if r != 4:
+        if r <= 3:
             set_date_tick(axes[r,c], (1, 7), '%m', 0)
         else:
             set_date_tick(axes[r,c], (1, 7), '%Y/%m', 30)
-
-        tt = p.db['T']
-        dd = [dt_fm_sn(a) for a in tt]
-        oo = np.ones_like(tt)
-        axes[r,c].plot(dd, oo, 'o', ms=4, alpha=0.2)
-
+        
+        # 調査が実施された日付をプロット
+        dd_org = [dt_fm_sn(a) for a in db.db['T']]
+        oo_org = np.ones_like(dd_org)
+        axes[r,c].plot(dd_org, oo_org, 'o', ms=4, alpha=0.2)
+    
 def options():
     """ オプション定義
     Returns
@@ -452,11 +405,8 @@ def main():
         if args.gout:
              fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
         
-    if 1:
-        proc_mav_avg(fc_dict, ppa)
-        
     if 0:
-        proc_factor_avg(ppa)
+        proc_mav_avg(fc_dict, ppa)
         
     if 1:
         proc_factor_mav(ppa, 'APP_RATE', '内閣支持率 感度係数')
