@@ -409,8 +409,8 @@ def main():
         proc_mav_avg(fc_dict, ppa)
         
     if 1:
-        proc_factor_mav(ppa, 'APP_RATE', '内閣支持率 感度係数')
-        proc_factor_mav(ppa, 'NAP_RATE', '内閣不支持率 感度係数')
+        proc_factor_mav(ppa, 'APP_RATE', '内閣 支持率 感度係数')
+        proc_factor_mav(ppa, 'NAP_RATE', '内閣 不支持率 感度係数')
         
     if 0:
         fig, axes = plt.subplots(3, 1, figsize=(10, 7))
