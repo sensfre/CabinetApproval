@@ -58,7 +58,7 @@ def proc_last(pp2, pp3, ppj):
             st2 = dt_fm_sn(p.db['T'][-2]).strftime('%m/%d')
             s = '%s %s   (%s)' % (p.label, st1, st2)
             ax.plot(xx, yy, '-', lw=1, color=col, alpha=0.4)
-            ax.plot(xx[-1], yy[-1], p.marker, ms=6, alpha=0.9, label=s)
+            ax.plot(xx[-1], yy[-1], p.marker, ms=p.size, alpha=0.9, label=s)
             # ax.text(xx[-1]+0.2, yy[-1]+0.4, p.label, fontsize=10, alpha=0.8)
             ax.text(xx[-1]+xoff, yy[-1]+yoff, p.label, fontsize=10, alpha=0.8)
             
