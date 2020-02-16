@@ -29,7 +29,7 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, column):
     ax.set_ylabel('調査結果(発表値) %')
     for p in pp:
         dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, p.db[yn], p.marker, ms=4, label=p.label, alpha=0.5)
+        ax.plot(dd, p.db[yn], p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
     # dd = [dt_fm_sn(a) for a in tt]
     # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=6, alpha=0.2)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
@@ -43,7 +43,7 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, column):
         dd = [dt_fm_sn(a) for a in p.db['T']]
         ff = [fc_dict[yn][p.label](t) for t in p.db['T']]
         vv = [a/b for a, b in zip(p.db[yn], ff)]
-        ax.plot(dd, vv, p.marker, ms=4, label=p.label, alpha=0.5)
+        ax.plot(dd, vv, p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tt]
     ax.plot(dd, pp_buf[yn], '-', color='blue', lw=8, alpha=0.1)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
