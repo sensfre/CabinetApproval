@@ -45,8 +45,6 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, sdv_buf, num_bu
         ff = [fc_dict[yn][p.label](t) for t in p.db['T']]
         vv = [a/b for a, b in zip(p.db[yn], ff)]
         ax.plot(dd, vv, p.marker, ms=p.size*0.5, label=p.label, alpha=0.3)
-        if p.label == '日経':
-            print(yn, p.db[yn][-1], ff[-1])
     dd = [dt_fm_sn(a) for a in tt]
     # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=1, alpha=1)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
@@ -279,7 +277,7 @@ def proc_factor_mav(db_list, k_app_nap, k_title, fc_dict):
             else:
                 axes[r,c].plot(dd, f, color='blue')
             fc = [fc_dict[k_app_nap][db.label](t) for t in tt]
-            axes[r,c].plot(dd, fc, '-')
+            axes[r,c].plot(dd, fc, '-', color='green', alpha=0.5)
 
     # タイトルや軸の設定
     for j, db in enumerate(db_list):
