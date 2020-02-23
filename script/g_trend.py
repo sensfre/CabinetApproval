@@ -305,8 +305,8 @@ def options():
                 help='DB 読み込み開始日付 (2016-04-01)')
     opt.add_argument('-e', dest='db_end', default='2022-12-31',
                 help='DB 読み込み終了日付 (2022-12-31)')
-    opt.add_argument('-m', dest='ma_days', type=int, default=150,
-                help='DB の長期移動平均の窓サイズ [days]. (150)')
+    opt.add_argument('-m', dest='ma_days', type=int, default=180,
+                help='DB の長期移動平均の窓サイズ [days]. (180)')
     
     # GOUT
     opt.add_argument('-g', '--gout', action='store_true',
