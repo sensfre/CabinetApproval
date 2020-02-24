@@ -54,10 +54,6 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, column):
     ax.set_ylim(-8, 8)
     ax.set_ylabel('感度補正後の残差 %')
     for p in pp:
-        if p.label == '読売':
-            alpha = 0.5
-        else:
-            alpha = 0.5
         ff = [fc_dict[yn][p.label](t) for t in p.db['T']]
         vv = [a/b for a, b in zip(p.db[yn], ff)]
         ss, sd = deviation(p.db['T'], vv, pp_func[yn])
