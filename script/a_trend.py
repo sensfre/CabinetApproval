@@ -178,14 +178,18 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
         _vv = _vv + list(vv)
     _tt = np.array(_tt)
     _vv = np.array(_vv)
+    tt_min = min(_tt)
     
     def _mav(t):
         # 時刻 t における窓付き指数移動平均
         #     w_days : [day] 窓幅
         #     k_days : [day] 時定数
         #
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_days)
-        ndx = (_tt >= t - w_days) & (_tt <= t)
+        if t - tt_min < w_days:
+            w_post = t - tt_min + w_days
+        else:
+            w_post = 0
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
         num = len(tt)
@@ -205,8 +209,11 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     f_mav = interp(t_node, v_node)
     
     def _err(t):
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_days)
-        ndx = (_tt >= t - w_days) & (_tt <= t)
+        if t - tt_min < w_days:
+            w_post = t - tt_min + w_days
+        else:
+            w_post = 0
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
         d = [v - f_mav(t) for t, v in zip(tt, vv)]
@@ -400,8 +407,8 @@ def main():
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.90, top=0.95, wspace=0.44)
         
         fig.text(0.20, 0.97, '支持する')
-        #fig.text(0.29, 0.62, '平均は指数移動平均')
-        #fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
+        fig.text(0.29, 0.62, '平均は指数移動平均')
+        fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
         proc_raw_cal_sdv(fc_dict, axes, 'APP_RATE', ppa, tta, ppa_buf, ppa_func, sdv_buf, num_buf, 0)
             
         fig.text(0.70, 0.97, '支持しない')

@@ -265,13 +265,18 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
         _vv = _vv + list(vv)
     _tt = np.array(_tt)
     _vv = np.array(_vv)
+    tt_min = min(_tt)
     
     def _mav(t):
         # 時刻 t における窓付き指数移動平均
         #     w_days : [day] 窓幅
         #     k_days : [day] 時定数
         #
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_days)
+        if t - tt_min < w_days:
+            w_post = t - tt_min + w_days
+        else:
+            w_post = 0
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
         ww = np.exp(-np.abs(tt - t)/k_days)
