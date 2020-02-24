@@ -31,7 +31,7 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, sdv_buf, num_bu
         dd = [dt_fm_sn(a) for a in p.db['T']]
         ax.plot(dd, p.db[yn], p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
     # dd = [dt_fm_sn(a) for a in tt]
-    # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=6, alpha=0.2)
+    # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=6, alpha=0.2) # 平均値
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -46,7 +46,7 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, sdv_buf, num_bu
         vv = [a/b for a, b in zip(p.db[yn], ff)]
         ax.plot(dd, vv, p.marker, ms=p.size*0.5, label=p.label, alpha=0.3)
     dd = [dt_fm_sn(a) for a in tt]
-    # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=1, alpha=1)
+    ax.plot(dd, pp_buf[yn], '-', color='blue', lw=1, alpha=1) # 平均値
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     #ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.1))
@@ -178,18 +178,25 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
         _vv = _vv + list(vv)
     _tt = np.array(_tt)
     _vv = np.array(_vv)
+    tt_min = min(_tt)
     
     def _mav(t):
         # 時刻 t における窓付き指数移動平均
         #     w_days : [day] 窓幅
         #     k_days : [day] 時定数
         #
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_days)
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
-        ww = np.exp(-np.abs(tt - t)/k_days)
-        avg = np.sum(ww*vv)/np.sum(ww)
         num = len(tt)
+        if num >= 2:
+            ww = np.exp(-np.abs(tt - t)/k_days)
+            avg = np.sum(ww*vv)/np.sum(ww)
+        else:
+            avg = np.NaN
         return avg, num
         
     # 全社平均(指数移動平均)を求める。
@@ -201,7 +208,10 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     f_mav = interp(t_node, v_node)
     
     def _err(t):
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_days)
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
         d = [v - f_mav(t) for t, v in zip(tt, vv)]
@@ -328,14 +338,14 @@ def main():
     # 補正後の平均
     #
     t0 = sn_fm_dt(d0)
-    tta = np.arange(t0, t_max(ppa), 1) # 移動平均を求める時刻
+    tta = np.arange(t0, t_max(ppa) + 1, 1) # 移動平均を求める時刻
     
     ppa_buf = {} # 移動平均 (点列)
     num_buf = {}
     sdv_buf = {}
     ppa_func = {}
     for k in ['APP_RATE', 'NAP_RATE']:
-        ppa_buf[k], sdv_buf[k], num_buf[k] = calc_mav(fc_dict, k, tta, ppa, w_days=14, k_days=args.k_days)
+        ppa_buf[k], sdv_buf[k], num_buf[k] = calc_mav(fc_dict, k, tta, ppa, w_days=30, k_days=args.k_days)
         ppa_func[k] = interp(tta, ppa_buf[k])
     
     if 1:
@@ -347,8 +357,8 @@ def main():
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.90, top=0.95, wspace=0.44)
         
         fig.text(0.20, 0.97, '支持する')
-        #fig.text(0.29, 0.62, '平均は指数移動平均')
-        #fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
+        fig.text(0.29, 0.62, '平均は指数移動平均')
+        fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
         proc_raw_cal_sdv(fc_dict, axes, 'APP_RATE', ppa, tta, ppa_buf, ppa_func, sdv_buf, num_buf, 0)
             
         fig.text(0.70, 0.97, '支持しない')
