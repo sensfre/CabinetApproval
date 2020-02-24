@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from fileio import dt_fm_sn, sn_fm_dt
-from polldb import DB, interp, t_min, t_max
+from polldb import DB, interp, t_min, t_max, calc_fact
 from db_defs import db_defs
 
 cfg = {
@@ -324,19 +324,7 @@ def options():
     
     return opt
     
-def calc_fact(db_list, yn):
-    
-    tstp = 10
-    tt = np.arange(t_min(db_list), t_max(db_list), tstp)
-    ma_ = interp(tt, [np.mean([db.ma[yn](t) for db in db_list]) for t in tt])
-    fc_list = []
-    for db in db_list:
-        ff = [db.ma[yn](t)/ma_(t) for t in tt]
-        fc_list.append(interp(tt, ff))
-    # fc_list = [interp(tt, [db.ma[yn](t)/ma_(t) for t in tt]) for db in db_list]
-    return fc_list
-    
-    
+
 def _d(s):
     return datetime.strptime(s, '%Y-%m-%d')
     
@@ -362,9 +350,11 @@ def main():
     for yn in ['APP_RATE', 'NAP_RATE']:
         fc_dict[yn] = {}
         for pp in [ppj, pp2, pp3]:
-            ff = calc_fact(pp, yn)
-            for p, f in zip(pp, ff):
-                fc_dict[yn][p.label] = f
+            tstp = 10
+            tt = np.arange(t_min(pp), t_max(pp), tstp)
+            ff_step = calc_fact(pp, yn, tt, d_window=6*30)
+            for p, f in zip(pp, ff_step):
+                fc_dict[yn][p.label] = interp(tt, f)
     
     # 補正後の平均
     #

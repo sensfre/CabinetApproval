@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from fileio import dt_fm_sn, sn_fm_dt
-from polldb import DB, interp, t_min, t_max
+from polldb import DB, interp, t_min, t_max, calc_fact
 from db_defs import db_defs
 
 cfg = {
@@ -209,16 +209,6 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     e_node = [_err(a) for a in t_node]
     return v_node, e_node, n_node
     
-def proc_mav_avg(fc_dict, ppa):
-    args = cfg['args']
-    d0 = _d(args.db_begin)
-    t0 = sn_fm_dt(d0)
-    
-    app_buf = []
-    for db in ppa:
-        ff = np.array([fc_dict['APP_RATE'][db.label](a) for a in db.db['T']])
-        interp(db.db['T'], db.db['APP_RATE']/ff)
-    
 def proc_factor_mav(db_list, k_app_nap, k_title, fc_dict):
     """
     Parameters
@@ -304,33 +294,6 @@ def options():
     
     return opt
     
-def calc_fact(db_list, k_app_nap, t_node, d_window):
-    """ 各社の感度を求める
-    
-    Parameters
-    ----------
-    t_node, 1d-array : 感度係数を求める日付のリスト
-    d_window, float [day] : 移動平均の窓幅 (過去 d_window 日に含まれる調査の平均を求める)
-    
-    Note
-    ----
-    ウィンドウ内の調査結果が 2 個未満の時は、感度の値を nan にする。
-    
-    """
-    def _mav(db, t):
-        ndx = (t - d_window <= db.db['T']) & (db.db['T'] <= t)
-        y_ = db.db[k_app_nap][ndx]
-        if len(y_) >= 2:
-            ans = np.mean(y_)
-        else:
-            ans = np.NaN
-        return ans
-    
-    yy = [[_mav(db, t) for t in t_node] for db in db_list]
-    ya = [np.nanmean(a) for a in zip(*yy)]
-    ff = [[a/b for a,b in zip(y, ya)] for y in yy]
-    return ff
-
 def _d(s):
     return datetime.strptime(s, '%Y-%m-%d')
     
@@ -395,9 +358,6 @@ def main():
         
         if args.gout:
              fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
-        
-    if 0:
-        proc_mav_avg(fc_dict, ppa)
         
     if 1:
         proc_factor_mav(ppa, 'APP_RATE', '内閣 支持率 感度係数', fc_dict)
