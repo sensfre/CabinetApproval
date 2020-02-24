@@ -58,7 +58,7 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, column):
         vv = [a/b for a, b in zip(p.db[yn], ff)]
         ss, sd = deviation(p.db['T'], vv, pp_func[yn])
         dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, ss, '-', label=p.label, alpha=alpha)
+        ax.plot(dd, ss, '-', label=p.label, alpha=0.5)
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -365,9 +365,9 @@ def main():
     # 補正後の平均
     #
     t0 = sn_fm_dt(d0)
-    tt2 = np.arange(t0, t_max(pp2), 1)
-    tt3 = np.arange(t0, t_max(pp3), 1)
-    ttj = np.arange(t0, t_max(ppj), 1)
+    tt2 = np.arange(t0, t_max(pp2) + 1, 1)
+    tt3 = np.arange(t0, t_max(pp3) + 1, 1)
+    ttj = np.arange(t0, t_max(ppj) + 1, 1)
     
     pp2_buf = {}
     pp2_func = {}
