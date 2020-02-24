@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from fileio import dt_fm_sn, sn_fm_dt
-from polldb import DB, interp, t_min, t_max
+from polldb import DB, interp, t_min, t_max, calc_fact
 from db_defs import db_defs
 
 cfg = {
@@ -219,16 +219,6 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     e_node = [_err(a) for a in t_node]
     return v_node, e_node, n_node
     
-def proc_mav_avg(fc_dict, ppa):
-    args = cfg['args']
-    d0 = _d(args.db_begin)
-    t0 = sn_fm_dt(d0)
-    
-    app_buf = []
-    for db in ppa:
-        ff = np.array([fc_dict['APP_RATE'][db.label](a) for a in db.db['T']])
-        interp(db.db['T'], db.db['APP_RATE']/ff)
-    
 def proc_factor_mav(db_list, k_app_nap, k_title, fc_dict):
     """
     Parameters
@@ -238,33 +228,6 @@ def proc_factor_mav(db_list, k_app_nap, k_title, fc_dict):
     k_title, string : グラフタイトル
     
     """
-    def _factor_mav(t_node, d_window):
-        """ 各社の感度を求める
-        
-        Parameters
-        ----------
-        t_node, 1d-array : 感度係数を求める日付のリスト
-        d_window, float [day] : 移動平均の窓幅 (過去 d_window 日に含まれる調査の平均を求める)
-        
-        Note
-        ----
-        ウィンドウ内の調査結果が 2 個未満の時は、感度の値を nan にする。
-        
-        """
-        def _mav(db, t):
-            ndx = (t - d_window <= db.db['T']) & (db.db['T'] <= t)
-            y_ = db.db[k_app_nap][ndx]
-            if len(y_) >= 2:
-                ans = np.mean(y_)
-            else:
-                ans = np.NaN
-            return ans
-        
-        yy = [[_mav(db, t) for t in t_node] for db in db_list]
-        ya = [np.nanmean(a) for a in zip(*yy)]
-        ff = [[a/b for a,b in zip(y, ya)] for y in yy]
-        return ff
-        
     # 図の準備
     fig, axes = plt.subplots(5, 2, figsize=(10, 7))
     fig.text(0.10, 0.97, k_title, fontsize=16)
@@ -278,7 +241,7 @@ def proc_factor_mav(db_list, k_app_nap, k_title, fc_dict):
     # 窓幅をいくつか選んで感度のトレンドを描画(調査会社毎)
     for ndx, m in enumerate([3, 6]):  # window size (m-month)
         tt = np.arange(t0 + 6*30, tf, 7)
-        ff = _factor_mav(tt, m*30)
+        ff = calc_fact(db_list, k_app_nap, tt, m*30)
         dd = [dt_fm_sn(a) for a in tt]
         for j, (f, db) in enumerate(zip(ff, db_list)):
             c, r = divmod(j, 5)
@@ -341,19 +304,6 @@ def options():
     
     return opt
     
-def calc_fact(db_list, yn):
-    
-    tstp = 10
-    tt = np.arange(t_min(db_list), t_max(db_list) + 1, tstp)
-    ma_ = interp(tt, [np.mean([db.ma[yn](t) for db in db_list]) for t in tt])
-    fc_list = []
-    for db in db_list:
-        ff = [db.ma[yn](t)/ma_(t) for t in tt]
-        fc_list.append(interp(tt, ff))
-    # fc_list = [interp(tt, [db.ma[yn](t)/ma_(t) for t in tt]) for db in db_list]
-    return fc_list
-    
-    
 def _d(s):
     return datetime.strptime(s, '%Y-%m-%d')
     
@@ -379,9 +329,11 @@ def main():
     fc_dict = {}
     for yn in ['APP_RATE', 'NAP_RATE']:
         fc_dict[yn] = {}
-        ff = calc_fact(ppa, yn) # ファクター関数のリスト
-        for p, f in zip(ppa, ff):
-            fc_dict[yn][p.label] = f
+        tstp = 10
+        tt = np.arange(t_min(ppa), t_max(ppa), tstp)
+        ff_step = calc_fact(ppa, yn, tt, d_window=6*30)
+        for p, f in zip(ppa, ff_step):
+            fc_dict[yn][p.label] = interp(tt, f)
     
     # 補正後の平均
     #
@@ -416,9 +368,6 @@ def main():
         
         if args.gout:
              fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
-        
-    if 0:
-        proc_mav_avg(fc_dict, ppa)
         
     if 1:
         proc_factor_mav(ppa, 'APP_RATE', '内閣 支持率 感度係数', fc_dict)

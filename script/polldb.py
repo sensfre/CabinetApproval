@@ -184,4 +184,30 @@ def gen_avg_dict(db_list):
         avg_dict[k] = gen_avg_fnc(fnc_list, t_node)
     return avg_dict
     
+def calc_fact(db_list, k_app_nap, t_node, d_window):
+    """ 各社の感度を求める
     
+    Parameters
+    ----------
+    t_node, 1d-array : 感度係数を求める日付のリスト
+    d_window, float [day] : 移動平均の窓幅 (過去 d_window 日に含まれる調査の平均を求める)
+    
+    Note
+    ----
+    ウィンドウ内の調査結果が 2 個未満の時は、感度の値を nan にする。
+    
+    """
+    def _mav(db, t):
+        ndx = (t - d_window <= db.db['T']) & (db.db['T'] <= t)
+        y_ = db.db[k_app_nap][ndx]
+        if len(y_) >= 2:
+            ans = np.mean(y_)
+        else:
+            ans = np.NaN
+        return ans
+    
+    yy = [[_mav(db, t) for t in t_node] for db in db_list]
+    ya = [np.nanmean(a) for a in zip(*yy)]
+    ff = [[a/b for a,b in zip(y, ya)] for y in yy]
+    return ff
+
