@@ -251,6 +251,18 @@ def reverse_legend(hh, ll):
     hh, ll = zip(*hhll)
     return hh, ll
     
+def smooth(t_node, v_node, w_days):
+    t0 = min(t_node)
+    
+    def _mav(t):
+        w_post = max(0, t0 + w_days - t)
+        ndx = (t_node >= t - w_days) & (t_node <= t + w_post)
+        ans = np.mean(v_node[ndx])
+        return ans
+        
+    vv = [_mav(t) for t in t_node]
+    return vv
+    
 def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     """
     w_days : [day]  +/-w_days のデータを使う
@@ -272,10 +284,9 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
         #     w_days : [day] 窓幅
         #     k_days : [day] 時定数
         #
-        if t - tt_min < w_days:
-            w_post = t - tt_min + w_days
-        else:
-            w_post = 0
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
         ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
@@ -287,6 +298,9 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     #  f_mav(t) は補間関数
     # t_node = [a for a in sorted(np.arange(t_max(db_list), t_min(db_list), -2))]
     v_node = np.array([_mav(a) for a in t_node])
+    if 0:
+        v_node = smooth(t_node, v_node, 7)
+    
     return v_node
     
     

@@ -185,10 +185,9 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
         #     w_days : [day] 窓幅
         #     k_days : [day] 時定数
         #
-        if t - tt_min < w_days:
-            w_post = t - tt_min + w_days
-        else:
-            w_post = 0
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
         ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
@@ -209,10 +208,9 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     f_mav = interp(t_node, v_node)
     
     def _err(t):
-        if t - tt_min < w_days:
-            w_post = t - tt_min + w_days
-        else:
-            w_post = 0
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
         ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
         tt = _tt[ndx]
         vv = _vv[ndx]
