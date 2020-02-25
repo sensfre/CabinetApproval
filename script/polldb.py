@@ -198,7 +198,10 @@ def calc_fact(db_list, k_app_nap, t_node, d_window):
     
     """
     def _mav(db, t):
-        ndx = (t - d_window <= db.db['T']) & (db.db['T'] <= t)
+        p_window = max(0, db.db['T'][0] + d_window - t)
+        if 1:
+            p_window = d_window
+        ndx = (db.db['T'] >= t - d_window) & (db.db['T'] <= t + p_window)
         y_ = db.db[k_app_nap][ndx]
         if len(y_) >= 2:
             ans = np.mean(y_)

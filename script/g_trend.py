@@ -89,6 +89,7 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     if flg_jnn:
         ax.plot(ddj, ppj_buf['APP_RATE'], '--', lw=1, color=cy, label='JNN', alpha=1.0)
     ax.plot(dd2, pp2_buf['APP_RATE'], '-', lw=3, color='tomato', label='グループH')
+    
     ax.tick_params(axis='y', colors=cy2)
     ax.set_yticks(range(0, 51, 10))
     ax.text(datetime(2016, 9, 1), 30, '支持する', color=cy2, fontsize=20)
@@ -118,7 +119,7 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     ax2.grid(which='both')
     ax1.grid(which='minor', alpha=0.1)
     ax2.grid(which='minor', alpha=0.1)
-
+    
     bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
     fig.text(0.19, 0.23, "グループ H: 読売/日経/共同/FNN の平均", fontsize=8) #, bbox=bbox)
     fig.text(0.19, 0.19, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=8) #, bbox=bbox)
@@ -151,8 +152,8 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout + 1, cfg['gout_date'])))
     
-    print('3', pp3_buf['APP_RATE'][-1], pp3_buf['NAP_RATE'][-1])
-    print('2', pp2_buf['APP_RATE'][-1], pp2_buf['NAP_RATE'][-1])
+    print('L (3)', pp3_buf['APP_RATE'][-1], pp3_buf['NAP_RATE'][-1])
+    print('H (2)', pp2_buf['APP_RATE'][-1], pp2_buf['NAP_RATE'][-1])
     
 def proc_yn(pp2, pp3, ppj):
     args = cfg['args']
@@ -256,6 +257,8 @@ def smooth(t_node, v_node, w_days):
     
     def _mav(t):
         w_post = max(0, t0 + w_days - t)
+        if 1:
+            w_post = w_days
         ndx = (t_node >= t - w_days) & (t_node <= t + w_post)
         ans = np.mean(v_node[ndx])
         return ans
@@ -272,8 +275,7 @@ def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
     _vv = []
     for db in db_list:
         _tt = _tt + list(db.db['T'])
-        ff = [fc_dict[yn][db.label](t) for t in db.db['T']]
-        vv = [a/b for a, b in zip(db.db[yn], ff)]
+        vv = [a/fc_dict[yn][db.label](b) for a, b in zip(db.db[yn], db.db['T'])]
         _vv = _vv + list(vv)
     _tt = np.array(_tt)
     _vv = np.array(_vv)
