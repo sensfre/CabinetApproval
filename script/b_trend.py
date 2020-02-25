@@ -150,11 +150,11 @@ def proc_summary(_tta, _ppa_buf, _sdv_buf, _num_buf):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
     
-def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf):
+def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf, db_list, fc_dict):
     args = cfg['args']
     flg_jnn = False
-    fig, ax1 = plt.subplots()
-    fig.subplots_adjust(left=0.16, right=0.86, bottom=0.15)
+    fig, ax1 = plt.subplots(figsize=(8, 5))
+    fig.subplots_adjust(left=0.16, right=0.8, bottom=0.15)
     ax1.set_title('報道 10社の平均')
     cy = 'darkorange'
     cy2 = 'orangered'
@@ -169,7 +169,7 @@ def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf):
     ax = ax1
     err = sdv_buf/np.sqrt(num_buf)
     ax.fill_between(dda, ppa_buf-err, ppa_buf+err, color=cy, linestyle='dashed', alpha=0.3)
-    ax.plot(dda, ppa_buf, color=cy, label='報道10社平均', alpha=1)
+    ax.plot(dda, ppa_buf, color=cy, label='支持(平均)', alpha=1)
     
     ax.set_yticks(range(0, 100, 5))
     ax.set_yticks(range(0, 100, 1), minor=True)
@@ -182,13 +182,20 @@ def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf):
     
     err = sdv_buf/np.sqrt(num_buf)
     ax.fill_between(dda, ppa_buf-err, ppa_buf+err, color=cn, linestyle='dashed', alpha=0.3)
-    ax.plot(dda, ppa_buf, color=cn, label='報道10社平均', alpha=1)
+    ax.plot(dda, ppa_buf, color=cn, label='不支持(平均)', alpha=1)
     
     ax.xaxis_date()
     ax.set_xlim(dt_fm_sn(tta[0]), dt_fm_sn(30 + tta[-1]))
+    ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))
     set_date_tick(ax1, (1, 7), '%Y/%m', 30)
-    ax1.grid(which='both')
-    ax1.grid(which='minor', alpha=0.1)
+    ax.grid(which='both')
+    ax.grid(which='minor', alpha=0.1)
+    
+    for db in db_list:
+        yy = [a/fc_dict['APP_RATE'][db.label](b) for a,b in zip(db.db['APP_RATE'], db.db['T'])]
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ax.plot(dd, yy, db.marker, ms=db.size*0.5, color='orange', alpha=1, label=db.label)
+    ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
@@ -238,7 +245,7 @@ def calc_every_sunday(fc_dict, yn, t_node, db_list):
     
     def _avg(t):
         # t +/-2 day の観測値の平均を求める
-        ndx = (_tt >= t - 2) & (_tt <= t + 2)
+        ndx = (_tt >= t - 3) & (_tt <= t + 3)
         tt = _tt[ndx]
         vv = _vv[ndx]
         n = len(vv)
@@ -250,7 +257,7 @@ def calc_every_sunday(fc_dict, yn, t_node, db_list):
             e = 3.5/2 # [pt]  1σ相当
         else:
             v = np.mean(vv)
-            e = np.std(vv-v, ddof=1)
+            e = max(np.std(vv-v, ddof=1), 3.5/2/np.sqrt(n))
         return v, e, n
         
     v_node, e_node, n_node = zip(*[_avg(t) for t in t_node])
@@ -327,7 +334,7 @@ def options():
     opt.add_argument('-e', dest='db_end', default='2022-12-31',
                 help='DB 読み込み終了日付 (2022-12-31)')
     opt.add_argument('-m', dest='ma_days', type=int, default=180,
-                help='DB の長期移動平均の窓サイズ [days]. (180)')
+                help='DB の長期移動平均の窓サイズ [days]. (180)') # MA() 不使用なら削除
     
     # GOUT
     opt.add_argument('-g', '--gout', action='store_true',
@@ -336,12 +343,6 @@ def options():
                 help='グラフの出力先フォルダ (../output)')
     opt.add_argument('-n', dest='gout_ndx', type=int, default=31,
                 help='グラフの(先頭)図番号 Fig# (31)')
-    
-    # トレンド グラフ
-    opt.add_argument('-k', dest='k_days', type=int, default=10,
-                help='指数移動平均の時定数[day]  (10)')
-    # opt.add_argument('-t', dest='trimday', default=None,
-    #            help='直近 n 日の結果を抽出 (-t14 for last 2 weeks)') 
     
     return opt
     
@@ -392,7 +393,7 @@ def main():
     
     if 1:
         proc_summary(t_node, ppa_buf, sdv_buf, num_buf)
-        proc_summary_x(t_node, ppa_buf, sdv_buf, num_buf)
+        proc_summary_x(t_node, ppa_buf, sdv_buf, num_buf, ppa, fc_dict)
     
     if 1:
         # 公表値/補正値/残差
@@ -400,13 +401,9 @@ def main():
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.90, top=0.95, wspace=0.44)
         
         fig.text(0.20, 0.97, '支持する')
-        # fig.text(0.29, 0.62, '平均は指数移動平均')
-        # fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
         proc_raw_cal_sdv(fc_dict, axes, 'APP_RATE', ppa, t_node, ppa_buf, ppa_func, sdv_buf, num_buf, 0)
             
         fig.text(0.70, 0.97, '支持しない')
-        # fig.text(0.75, 0.62, '平均は指数移動平均')
-        # fig.text(0.75, 0.60, '(時定数 %d 日)' % args.k_days)
         proc_raw_cal_sdv(fc_dict, axes, 'NAP_RATE', ppa, t_node, ppa_buf, ppa_func, sdv_buf, num_buf, 1)
         
         if args.gout:
