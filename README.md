@@ -41,3 +41,7 @@ numpy/scipy/matplotlib/pillow
 
 ### g_trend.py
 ![FIG01](https://user-images.githubusercontent.com/52857956/75243507-57423f80-580d-11ea-9fa1-b3b89f6f3344.png)
+
+### g_app_nap.py
+![FIG02](https://user-images.githubusercontent.com/52857956/75244070-670e5380-580e-11ea-8fd3-28a37c5af16d.png)
+
