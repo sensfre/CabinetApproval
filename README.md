@@ -37,3 +37,4 @@ numpy/scipy/matplotlib/pillow
 * polldb.py    各社のデータと長期平均を保持するクラス
 * db_defs.py   グループ分け & DB の宣言(生成)
 
+![FIG01](https://user-images.githubusercontent.com/52857956/75242926-58bf3800-580c-11ea-9671-a9387011d6d9.png)
