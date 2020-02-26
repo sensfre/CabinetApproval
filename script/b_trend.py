@@ -235,10 +235,10 @@ def calc_every_sunday(fc_dict, yn, t_node, db_list):
             e = np.NaN
         elif n == 1:
             v = np.mean(vv)
-            e = 3.5/2 # [pt]  1σ相当
+            e = 3.5/2 # [pt]  1σ 相当
         else:
             v = np.mean(vv)
-            e = max(np.std(vv, ddof=1), 3.5/2/np.sqrt(n))
+            e = max(np.std(vv, ddof=1), 3.5/2)/np.sqrt(n)
         return v, e, n
         
     v_node, e_node, n_node = zip(*[_avg(t) for t in t_node])
