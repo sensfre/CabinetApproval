@@ -131,53 +131,61 @@ def proc_summary(_tta, _ppa_buf, _sdv_buf, _num_buf):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
     
+    
 def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf, db_list, fc_dict):
+    def _valid(id):
+        tasn = [a for a in zip(_tta, _ppa_buf[id], _sdv_buf[id], _num_buf[id]) if a[3] > 0]
+        return [np.array(a) for a in zip(*tasn)]
+        
     args = cfg['args']
-    flg_jnn = False
-    fig, ax1 = plt.subplots(figsize=(8, 5))
+    
+    fig, ax = plt.subplots(figsize=(8, 5))
     fig.subplots_adjust(left=0.16, right=0.8, bottom=0.15)
-    ax1.set_title('報道 10社の平均')
-    cy = 'darkorange'
-    cy2 = 'orangered'
-    cn = 'skyblue'
-    cn2 = 'darkcyan'
-
-    yn = 'APP_RATE'
-    tvsn = [(a,b,c,d) for (a,b,c,d) in zip(_tta, _ppa_buf[yn], _sdv_buf[yn], _num_buf[yn]) if d > 0]
-    tta, ppa_buf, sdv_buf, num_buf = [np.array(a) for a in zip(*tvsn)]
-    dda = [dt_fm_sn(a) for a in tta]
     
-    ax = ax1
-    err = sdv_buf/np.sqrt(num_buf)
-    ax.fill_between(dda, ppa_buf-err, ppa_buf+err, color=cy, linestyle='dashed', alpha=0.3)
-    ax.plot(dda, ppa_buf, color=cy, label='支持(平均)', alpha=1)
+    # タイトル/グリッド
+    ax.set_title('報道 10社の平均')
+    ax.grid(which='both')
+    ax.grid(which='minor', alpha=0.1)
     
+    # X 軸
+    ax.xaxis_date()
+    ax.set_xlim(dt_fm_sn(_tta[0]), dt_fm_sn(30 + _tta[-1]))
+    ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))  # 日付埋め込み  ★
+    set_date_tick(ax, (1, 7), '%Y/%m', 30)
+    
+    # Y 軸
     ax.set_yticks(range(0, 100, 5))
     ax.set_yticks(range(0, 100, 1), minor=True)
     ax.set_ylim([25, 60])
     
-    yn = 'NAP_RATE'
-    tvsn = [(a,b,c,d) for (a,b,c,d) in zip(_tta, _ppa_buf[yn], _sdv_buf[yn], _num_buf[yn]) if d > 0]
-    tta, ppa_buf, sdv_buf, num_buf = [np.array(a) for a in zip(*tvsn)]
-    dda = [dt_fm_sn(a) for a in tta]
+    # 色指定
+    cy = 'darkorange'
+    cn = 'skyblue'
     
-    err = sdv_buf/np.sqrt(num_buf)
-    ax.fill_between(dda, ppa_buf-err, ppa_buf+err, color=cn, linestyle='dashed', alpha=0.3)
-    ax.plot(dda, ppa_buf, color=cn, label='不支持(平均)', alpha=1)
+    # 支持率
+    tim, avg, sdv, num = _valid('APP_RATE')
+    dda = [dt_fm_sn(a) for a in tim]
+    err = sdv/np.sqrt(num)
+    ax.fill_between(dda, avg-err, avg+err, color=cy, alpha=0.3)
+    ax.plot(dda, avg, color=cy, label='支持(平均)', alpha=1)
     
-    ax.xaxis_date()
-    ax.set_xlim(dt_fm_sn(tta[0]), dt_fm_sn(30 + tta[-1]))
-    ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))
-    set_date_tick(ax1, (1, 7), '%Y/%m', 30)
-    ax.grid(which='both')
-    ax.grid(which='minor', alpha=0.1)
+    # 不支持率
+    tim, avg, sdv, num = _valid('NAP_RATE')
+    dda = [dt_fm_sn(a) for a in tim]
+    err = sdv/np.sqrt(num)
+    ax.fill_between(dda, avg-err, avg+err, color=cn, alpha=0.3)
+    ax.plot(dda, avg, color=cn, label='不支持(平均)', alpha=1)
     
+    # 支持率の個別データ (感度補正後)
     for db in db_list:
         yy = [a/fc_dict['APP_RATE'][db.label](b) for a,b in zip(db.db['APP_RATE'], db.db['T'])]
         dd = [dt_fm_sn(a) for a in db.db['T']]
         ax.plot(dd, yy, db.marker, ms=db.size*0.5, color='orange', alpha=1, label=db.label)
+    
+    # 凡例
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
+    # 図の出力
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 1, cfg['gout_date'])))
     
@@ -230,7 +238,7 @@ def calc_every_sunday(fc_dict, yn, t_node, db_list):
             e = 3.5/2 # [pt]  1σ相当
         else:
             v = np.mean(vv)
-            e = max(np.std(vv-v, ddof=1), 3.5/2/np.sqrt(n))
+            e = max(np.std(vv, ddof=1), 3.5/2/np.sqrt(n))
         return v, e, n
         
     v_node, e_node, n_node = zip(*[_avg(t) for t in t_node])
