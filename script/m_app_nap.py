@@ -65,12 +65,10 @@ class UPDATE:
         
         # DB 読み込み
         #   DB の読み込み日付の指定.
-        #   ma_days は感度解析に使うものなので、本アプリでは不用だが省略できないので.
-        #
         args = cfg['args']
         d0 = _d(args.db_begin)
         df = _d(args.db_end)
-        self.pp2, self.pp3, self.ppj = db_defs(d0, df, args.db_folder, args.ma_days)
+        self.pp2, self.pp3, self.ppj = db_defs(d0, df, args.db_folder)
         
         # 評価日時 (10 日毎)
         self.t0 = sn_fm_dt(d0)

@@ -82,8 +82,7 @@ class DB:
         self.size = size # マーカーの相対サイズ
         self.color = color # グラフの色
         self.db = self.load(fn)
-        self.ma = {k:MA(self.db['T'], self.db[k]) for k in self.db} # 長期移動平均
-        self.interp = {k:interp(self.db['T'], self.db[k]) for k in self.db} # 直線補間
+        self.interp = {k:interp(self.db['T'], self.db[k]) for k in self.db} # 直線補間(動画で利用)
 
     def load(self, fn):
         a = load_sorted(os.path.join(self.data_folder, fn)) # T Y N
@@ -92,98 +91,6 @@ class DB:
         return buf
         
         
-class MA:
-    """ 移動平均用の関数(感度解析用)
-    
-    使い方
-    MA.set_window(...) # MA() 共通
-    f = MA([t1, t2, t3, ...], [v1, v2, v3, ...)) # 時系列から移動平均関数を生成
-    v = f(t)  # 時刻 t に対応する移動平均を得る。
-    
-    最初にデータ期間を指定する。
-    d_before days ～ d_after days のデータを使って単純移動平均。
-    d_before や d_after に 180 を指定すると、前後 6 ヵ月の平均になる。
-    報道各社の感度の解析に使うことを目的として、半年とか一年とかの長
-    期の移動平均の関数を生成する。
-    
-    """
-    
-    step = 10 # [day] サンプリング周期
-    
-    @classmethod
-    def set_window(kls, d_before, d_after):
-        kls.d_before = d_before
-        kls.d_after = d_after
-        
-    def __init__(self, tt, vv):
-        self.f_mav = self.gen_mav(tt, vv)
-        
-    def __call__(self, t):
-        v = self.f_mav(t)
-        return v
-        
-    def gen_mav(self, tt, vv):
-        
-        def _mav(t):
-            ndx = (tt >= t - self.d_before) & (tt <= t + self.d_after)
-            return np.mean(vv[ndx])
-            
-        t_node = np.arange(tt[0], tt[-1], self.step)
-        v_node = [_mav(a) for a in t_node]
-        f_mav = interp(t_node, v_node)
-        return f_mav
-        
-        
-def gen_avg_fnc(fnc_list, t_node):
-    """平均関数を生成する
-    
-    評価点 t_node 毎に fnc_list に含まれる関数の値を求めて、
-    その平均値から interp1d で関数を生成する。
-
-    Parameters
-    ----------
-    fnc_list, list of function : [F1(t), F2(t), ...]
-    t_node, 1d-array : 評価点 t1, t2, t3, ...
-    
-    Returns
-    -------
-    avg_fnc, function : 平均関数 = (1/n)*ΣFi(t)
-    
-    """
-    m_node = np.mean([[fnc(t) for t in t_node] for fnc in fnc_list], axis=0)
-    return interp(t_node, m_node)
-    
-    
-def gen_avg_dict(db_list):
-    """ 報道各社毎の長期平均の全社平均の辞書を生成する。
-    辞書の key は フィールド名('APP_RATE' 等)
-    主に報道機関ごとの支持率や不支持率の感度を求めるために用いる。
-    報道機関 db の感度 : 
-    　　感度 = db.ma['APP_RATE'](t)/avg_dict['APP_RATE'](t)
-    
-    Parameters
-    ----------
-    db_list, list : DB() インスタンスのリスト
-    
-    Returns
-    -------
-    avg_dict, dict : 長期平均の平均の辞書
-    
-    Notes
-    -----
-    avg_dict['APP_RATE'](t) により、APP_RATE の長期平均の平均が得られる。
-    報道機関 db の感度を以下で求まる。
-    　　感度 = db.ma['APP_RATE'](t)/avg_dict['APP_RATE'](t)
-    
-    """
-    avg_dict = {}
-    tstp = 10 # [day]
-    t_node = np.arange(t_min(db_list), t_max(db_list), tstp)
-    for k in db_list[0].ma:
-        fnc_list = [db.ma[k] for db in db_list]
-        avg_dict[k] = gen_avg_fnc(fnc_list, t_node)
-    return avg_dict
-    
 def calc_fact(db_list, k_app_nap, t_node, d_window):
     """ 各社の感度を求める
     
