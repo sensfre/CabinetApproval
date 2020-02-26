@@ -358,7 +358,7 @@ def main():
     args = cfg['args']
     d0 = _d(args.db_begin)
     df = _d(args.db_end)
-    pp2, pp3, ppj = db_defs(d0, df, args.db_folder, args.ma_days)
+    pp2, pp3, ppj = db_defs(d0, df, args.db_folder)
     
     # ファクター設定
     fc_dict = {}
