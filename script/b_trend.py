@@ -128,6 +128,13 @@ def proc_summary(_tta, _ppa_buf, _sdv_buf, _num_buf):
     ax1.grid(which='minor', alpha=0.1)
     ax2.grid(which='minor', alpha=0.1)
     
+    # 注釈
+    # bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
+    if args.k_days > 0:
+        fig.text(0.19, 0.16, "平均は指数移動平均(時定数 %d 日)"%args.k_days, fontsize=8) #, bbox=bbox)
+    else:
+        fig.text(0.19, 0.16, "平均は日曜前後数日", fontsize=8) #, bbox=bbox)
+        
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
     
@@ -185,6 +192,12 @@ def proc_summary_x(_tta, _ppa_buf, _sdv_buf, _num_buf, db_list, fc_dict):
     # 凡例
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
+    # 注釈
+    if args.k_days > 0:
+        fig.text(0.19, 0.16, "平均は指数移動平均(時定数 %d 日)"%args.k_days, fontsize=8) #, bbox=bbox)
+    else:
+        fig.text(0.19, 0.16, "平均は日曜前後数日", fontsize=8) #, bbox=bbox)
+        
     # 図の出力
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 1, cfg['gout_date'])))
@@ -207,6 +220,62 @@ def set_date_tick(ax, bymonth, format, rotate):
         for label in ax.get_xmajorticklabels():
             label.set_rotation(rotate)
             label.set_horizontalalignment("right")
+    
+def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
+    """
+    w_days : [day]  +/-w_days のデータを使う
+    k_days : [day] 指数移動平均の時定数
+    """
+    _tt = []
+    _vv = []
+    for db in db_list:
+        _tt = _tt + list(db.db['T'])
+        ff = [fc_dict[yn][db.label](t) for t in db.db['T']]
+        vv = [a/b for a, b in zip(db.db[yn], ff)]
+        _vv = _vv + list(vv)
+    _tt = np.array(_tt)
+    _vv = np.array(_vv)
+    tt_min = min(_tt)
+    
+    def _mav(t):
+        # 時刻 t における窓付き指数移動平均
+        #     w_days : [day] 窓幅
+        #     k_days : [day] 時定数
+        #
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
+        tt = _tt[ndx]
+        vv = _vv[ndx]
+        num = len(tt)
+        if num >= 2:
+            ww = np.exp(-np.abs(tt - t)/k_days)
+            avg = np.sum(ww*vv)/np.sum(ww)
+        else:
+            avg = np.NaN
+        return avg, num
+        
+    # 全社平均(指数移動平均)を求める。
+    #  f_mav(t) は補間関数
+    # t_node = [a for a in sorted(np.arange(t_max(db_list), t_min(db_list), -2))]
+    v_node, n_node = zip(*[_mav(a) for a in t_node])
+    v_node = np.array(v_node)
+    
+    f_mav = interp(t_node, v_node)
+    
+    def _err(t):
+        w_post = max(0, tt_min + w_days - t)
+        if 1:
+            w_post = w_days
+        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
+        tt = _tt[ndx]
+        vv = _vv[ndx]
+        d = [v - f_mav(t) for t, v in zip(tt, vv)]
+        return np.std(d, ddof=1)
+    e_node = [_err(a) for a in t_node]
+    return v_node, e_node, n_node
+    
     
 def calc_every_sunday(fc_dict, yn, t_node, db_list):
     """
@@ -331,6 +400,10 @@ def options():
     opt.add_argument('-n', dest='gout_ndx', type=int, default=81,
                 help='グラフの(先頭)図番号 Fig# (81)')
     
+    # トレンド グラフ
+    opt.add_argument('-k', dest='k_days', type=int, default=10,
+                help='指数移動平均の時定数[day]  (10)')
+    
     return opt
     
 def _d(s):
@@ -366,18 +439,23 @@ def main():
     
     # 補正後の平均
     #
-    t0 = sn_fm_dt(d0)
-    t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-    t_node = np.arange(t0_sunday, t_max(ppa) + 1, 7) # 移動平均を求める時刻
     
     ppa_buf = {} # 移動平均 (点列)
     num_buf = {}
     sdv_buf = {}
     ppa_func = {}
     for k in ['APP_RATE', 'NAP_RATE']:
-        ppa_buf[k], sdv_buf[k], num_buf[k] = calc_every_sunday(fc_dict, k, t_node, ppa)
+        if args.k_days > 0:
+            t0 = sn_fm_dt(d0)
+            t_node = np.arange(t0, t_max(ppa) + 1, 1) # 移動平均を求める時刻
+            ppa_buf[k], sdv_buf[k], num_buf[k] = calc_mav(fc_dict, k, t_node, ppa, w_days=30, k_days=args.k_days)
+        else:
+            t0 = sn_fm_dt(d0)
+            t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
+            t_node = np.arange(t0_sunday, t_max(ppa) + 1, 7) # 移動平均を求める時刻
+            ppa_buf[k], sdv_buf[k], num_buf[k] = calc_every_sunday(fc_dict, k, t_node, ppa)
         ppa_func[k] = interp(t_node, ppa_buf[k])
-    
+        
     if 1:
         proc_summary(t_node, ppa_buf, sdv_buf, num_buf)
         proc_summary_x(t_node, ppa_buf, sdv_buf, num_buf, ppa, fc_dict)
@@ -388,9 +466,19 @@ def main():
         fig.subplots_adjust(left=0.1, bottom=0.1, right=0.90, top=0.95, wspace=0.44)
         
         fig.text(0.20, 0.97, '支持する')
+        if args.k_days > 0:
+            fig.text(0.29, 0.62, '平均は指数移動平均')
+            fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
+        else:
+            fig.text(0.29, 0.62, '平均は日曜前後数日')
         proc_raw_cal_sdv(fc_dict, axes, 'APP_RATE', ppa, t_node, ppa_buf, ppa_func, sdv_buf, num_buf, 0)
             
         fig.text(0.70, 0.97, '支持しない')
+        if args.k_days > 0:
+            fig.text(0.75, 0.62, '平均は指数移動平均')
+            fig.text(0.75, 0.60, '(時定数 %d 日)' % args.k_days)
+        else:
+            fig.text(0.75, 0.62, '平均は日曜前後数日')
         proc_raw_cal_sdv(fc_dict, axes, 'NAP_RATE', ppa, t_node, ppa_buf, ppa_func, sdv_buf, num_buf, 1)
         
         if args.gout:
