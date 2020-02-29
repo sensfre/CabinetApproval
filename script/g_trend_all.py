@@ -263,7 +263,7 @@ def options():
     opt : ArgumentParser() インスタンス
     
     """
-    opt = argparse.ArgumentParser(description='2グループに分けて支持率を追う')
+    opt = argparse.ArgumentParser(description='報道10社の平均 (指数移動平均 or 日曜毎)')
     
     # DB
     opt.add_argument('-d', dest='db_folder', default='../data',
