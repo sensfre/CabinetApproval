@@ -22,29 +22,29 @@ cfg = {
 
 tven_buf = {}
 
-def proc_raw_cal_sdv(fc_dict, axes, column, k_app_nap, pp):
+def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     """ 発表値、補正値、補正値の残差のグラフ
     """
     tim, val, err, num = tven_buf[k_app_nap].by_column()
     
-    ax =axes[0, column]
+    ax =axes[0]
     ax.set_ylim(20, 70)
     ax.set_ylabel('調査結果(発表値) %')
-    for p in pp:
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, p.db[k_app_nap], p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
+    for db in db_list:
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ax.plot(dd, db.db[k_app_nap], db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
-    ax =axes[1, column]
+    ax =axes[1]
     ax.set_ylim(20, 70)
     ax.set_ylabel('感度補正後(曲線は平均値) %')
     ax.set_ylabel('感度補正後 %')
-    for p in pp:
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        vv = [a/fc_dict[k_app_nap][p.label](b) for a, b in zip(p.db[k_app_nap], p.db['T'])]
-        ax.plot(dd, vv, p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
+    for db in db_list:
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
+        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tim]
     ee = err/np.sqrt(num)
     ax.fill_between(dd, val-ee, val+ee, color='blue', alpha=0.1)
@@ -52,15 +52,15 @@ def proc_raw_cal_sdv(fc_dict, axes, column, k_app_nap, pp):
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     
-    ax =axes[2, column]
+    ax =axes[2]
     ax.set_ylim(-8, 8)
     ax.set_ylabel('感度補正後の残差 %')
     
-    for p in pp:
-        vv = [a/fc_dict[k_app_nap][p.label](b) for a, b in zip(p.db[k_app_nap], p.db['T'])]
-        dv, sd = deviation(p.db['T'], vv, interp(tim, val))
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, dv, '-', label=p.label, alpha=0.5)
+    for db in db_list:
+        vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
+        dv, sd = deviation(db.db['T'], vv, interp(tim, val))
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ax.plot(dd, dv, '-', label=db.label, alpha=0.5)
         
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     ax.grid(True)
@@ -322,7 +322,6 @@ def main():
     
     # 補正後の平均
     #
-    
     for k in ['APP_RATE', 'NAP_RATE']:
         if args.k_days > 0:
             t0 = sn_fm_dt(d0)
@@ -349,7 +348,7 @@ def main():
             fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
         else:
             fig.text(0.29, 0.62, '平均は日曜前後数日')
-        proc_raw_cal_sdv(fc_dict, axes, 0, 'APP_RATE', ppa)
+        proc_raw_cal_sdv(fc_dict, axes[:,0], 'APP_RATE', ppa)
             
         fig.text(0.70, 0.97, '支持しない')
         if args.k_days > 0:
@@ -357,7 +356,7 @@ def main():
             fig.text(0.75, 0.60, '(時定数 %d 日)' % args.k_days)
         else:
             fig.text(0.75, 0.62, '平均は日曜前後数日')
-        proc_raw_cal_sdv(fc_dict, axes, 1, 'NAP_RATE', ppa)
+        proc_raw_cal_sdv(fc_dict, axes[:,1], 'NAP_RATE', ppa)
         
         if args.gout:
              fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
