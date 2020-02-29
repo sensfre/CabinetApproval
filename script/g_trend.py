@@ -10,6 +10,7 @@ import matplotlib.dates as mdates
 
 from fileio import dt_fm_sn, sn_fm_dt
 from polldb import DB, interp, t_min, t_max, calc_fact
+from trend_util import TVEN, trend_mav, trend_sunday, deviation, set_date_tick
 from db_defs import db_defs
 
 cfg = {
@@ -17,56 +18,62 @@ cfg = {
     'args': None,    # parse_args() の戻り値を保持する
 }
 
-def deviation(tt, yy, yi):
-    yc = np.array([yi(t) for t in tt])
-    yd = yy - yc
-    sd = np.std(yd, ddof=1)
-    return yd, sd
+tven_buf = {
+    'H':{},
+    'L':{},
+    'J':{},
+}
+
+def proc_raw_cal_sdv(fc_dict, axes, yn, db_list, tim, avg):
     
-def proc_raw_cal_sdv(fc_dict, axes, yn, pp, tt, pp_buf, pp_func, column):
-    ax =axes[0, column]
+    ax =axes[0]
     ax.set_ylim(20, 70)
     ax.set_ylabel('調査結果(発表値) %')
-    for p in pp:
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, p.db[yn], p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
-    # dd = [dt_fm_sn(a) for a in tt]
-    # ax.plot(dd, pp_buf[yn], '-', color='blue', lw=6, alpha=0.2)
+    for db in db_list:
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ax.plot(dd, db.db[yn], db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
-    ax =axes[1, column]
+    ax =axes[1]
     ax.set_ylim(20, 70)
     ax.set_ylabel('感度補正後(太線は平均値) %')
-    for p in pp:
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        ff = [fc_dict[yn][p.label](t) for t in p.db['T']]
-        vv = [a/b for a, b in zip(p.db[yn], ff)]
-        ax.plot(dd, vv, p.marker, ms=p.size*0.5, label=p.label, alpha=0.5)
-    dd = [dt_fm_sn(a) for a in tt]
-    ax.plot(dd, pp_buf[yn], '-', color='blue', lw=8, alpha=0.1)
+    for db in db_list:
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ff = [fc_dict[yn][db.label](t) for t in db.db['T']]
+        vv = [a/b for a, b in zip(db.db[yn], ff)]
+        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+    dd = [dt_fm_sn(a) for a in tim]
+    ax.plot(dd, avg, '-', color='blue', lw=8, alpha=0.1)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
-    ax =axes[2, column]
+    ax =axes[2]
     ax.set_ylim(-8, 8)
     ax.set_ylabel('感度補正後の残差 %')
-    for p in pp:
-        ff = [fc_dict[yn][p.label](t) for t in p.db['T']]
-        vv = [a/b for a, b in zip(p.db[yn], ff)]
-        ss, sd = deviation(p.db['T'], vv, pp_func[yn])
-        dd = [dt_fm_sn(a) for a in p.db['T']]
-        ax.plot(dd, ss, '-', label=p.label, alpha=0.5)
+    for db in db_list:
+        vv = [a/fc_dict[yn][db.label](b) for (a, b) in zip(db.db[yn], db.db['T'])]
+        ss, sd = deviation(db.db['T'], vv, interp(tim, avg))
+        dd = [dt_fm_sn(a) for a in db.db['T']]
+        ax.plot(dd, ss, '-', label=db.label, alpha=0.5)
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
-def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
+def proc_trend():
+    """ サマリー  (↑支持, ↓不支持) + 円グラフ
+    """
     args = cfg['args']
-    
     flg_jnn = False
+    
+    tt2, app_hi, err_, num_ = tven_buf['H']['APP_RATE'].by_column()
+    tt2, nap_hi, err_, num_ = tven_buf['H']['NAP_RATE'].by_column()
+    tt3, app_lo, err_, num_ = tven_buf['L']['APP_RATE'].by_column()
+    tt3, nap_lo, err_, num_ = tven_buf['L']['NAP_RATE'].by_column()
+    ttj, app_j, err_, num_ = tven_buf['J']['APP_RATE'].by_column()
+    ttj, nap_j, err_, num_ = tven_buf['J']['NAP_RATE'].by_column()
     
     dd2 = [dt_fm_sn(a) for a in tt2]
     dd3 = [dt_fm_sn(a) for a in tt3]
@@ -75,52 +82,63 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     fig, ax1 = plt.subplots()
     fig.subplots_adjust(left=0.16, right=0.86, bottom=0.15)
     
+    # 色指定
     cy = 'darkorange'
     cy2 = 'orangered'
     cn = 'skyblue'
     cn2 = 'darkcyan'
     
     ax = ax1
-    # ax.xaxis_date()
-    ax.set_ylim([0, 100])
-    ax.set_xlim(dt_fm_sn(min(tt2[0],tt3[0])), dt_fm_sn(30 + max(tt2[-1],tt3[-1])))
-    
-    ax.bar(dd3, pp3_buf['APP_RATE'], width=2, color=cy, label='グループL', alpha=0.5)
+    ax.bar(dd3, app_lo, width=2, color=cy, label='グループL', alpha=0.5)
     if flg_jnn:
-        ax.plot(ddj, ppj_buf['APP_RATE'], '--', lw=1, color=cy, label='JNN', alpha=1.0)
-    ax.plot(dd2, pp2_buf['APP_RATE'], '-', lw=3, color='tomato', label='グループH')
+        ax.plot(ddj, app_j, '--', lw=1, color=cy, label='JNN', alpha=1.0)
+    ax.plot(dd2, app_hi, '-', lw=3, color='tomato', label='グループH')
     
+    # Y 凡例
+    ax.legend(loc='upper left', bbox_to_anchor=(0.65, 0.25))
+    
+    # Y 軸
+    ax.set_ylim([0, 100])
     ax.tick_params(axis='y', colors=cy2)
     ax.set_yticks(range(0, 51, 10))
     ax.text(datetime(2016, 9, 1), 30, '支持する', color=cy2, fontsize=20)
     ax.set_ylabel('内閣を支持する [%]', color=cy2, fontsize=14)
     ax.yaxis.set_label_coords(-0.08, 0.3)
-    ax.legend(loc='upper left', bbox_to_anchor=(0.65, 0.25))
     
+    # ---< 不支持率 >---
     ax2 = ax1.twinx()
     ax = ax2
-    ax.xaxis_date()
-    ax.set_ylim([100, 0])
-    ax.bar(dd3, pp3_buf['NAP_RATE'], width=2, color=cn, label='グループL', alpha=0.5)
+    ax.bar(dd3, nap_lo, width=2, color=cn, label='グループL', alpha=0.5)
     if flg_jnn:
-        ax.plot(ddj, ppj_buf['NAP_RATE'], '--', lw=1, color=cn, label='JNN', alpha=1.0)
-    ax.plot(dd2, pp2_buf['NAP_RATE'], '-', lw=3, color='royalblue', label='グループH')
+        ax.plot(ddj, nap_j, '--', lw=1, color=cn, label='JNN', alpha=1.0)
+    ax.plot(dd2, nap_hi, '-', lw=3, color='royalblue', label='グループH')
+    
+    # Y2 凡例 (順序を逆転)
+    hh, ll = ax.get_legend_handles_labels()
+    hh, ll = reverse_legend(hh, ll)
+    ax.legend(hh, ll, loc='upper left', bbox_to_anchor=(0.65, 0.9))
+    
+    # Y2 軸
+    ax.set_ylim([100, 0])
     ax.tick_params(axis='y', colors=cn2)
     ax.set_yticks(range(0, 51, 10))
     ax.text(datetime(2016, 8, 1), 20, '支持しない', color=cn2, fontsize=20)
     ax.set_ylabel('内閣を支持しない [%]', color=cn2, fontsize=14)
     ax.yaxis.set_label_coords(1.08, 0.7)
-    hh, ll = ax.get_legend_handles_labels()
-    hh, ll = reverse_legend(hh, ll)
-    ax.legend(hh, ll, loc='upper left', bbox_to_anchor=(0.65, 0.9))
     
+    # X 軸
+    ax.xaxis_date()
+    ax.set_xlim(dt_fm_sn(min(tt2[0],tt3[0])), dt_fm_sn(30 + max(tt2[-1],tt3[-1])))
     set_date_tick(ax1, (1, 7), '%Y/%m', 30)
+    
+    # タイトル/グリッド
     ax1.grid(which='both')
     ax2.grid(which='both')
     ax1.grid(which='minor', alpha=0.1)
     ax2.grid(which='minor', alpha=0.1)
     
-    bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
+    # 注釈
+    # bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
     fig.text(0.19, 0.23, "グループ H: 読売/日経/共同/FNN の平均", fontsize=8) #, bbox=bbox)
     fig.text(0.19, 0.19, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=8) #, bbox=bbox)
     fig.text(0.19, 0.16, "平均は指数移動平均(時定数 %d 日)"%args.k_days, fontsize=8) #, bbox=bbox)
@@ -128,13 +146,14 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 0, cfg['gout_date'])))
     
+    # ---< 円グラフ >---
     fig = plt.figure(figsize=(4, 4))
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1)
     ax = fig.add_subplot(1,1,1)
-    n3=pp3_buf['NAP_RATE'][-1]
-    n2=pp2_buf['NAP_RATE'][-1]
-    y2=pp2_buf['APP_RATE'][-1]
-    y3=pp3_buf['APP_RATE'][-1]
+    n3=nap_lo[-1]
+    n2=nap_hi[-1]
+    y3=app_lo[-1]
+    y2=app_hi[-1]
     dd = [n3, n2-n3, 100-n2-y2, y2-y3, y3]
     cc = [cn, 'royalblue', '0.3', 'tomato', cy]
     ll = ['支持しない', 'やや', '他', 'やや', '支持する']
@@ -152,10 +171,13 @@ def proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout + 1, cfg['gout_date'])))
     
-    print('L (3)', pp3_buf['APP_RATE'][-1], pp3_buf['NAP_RATE'][-1])
-    print('H (2)', pp2_buf['APP_RATE'][-1], pp2_buf['NAP_RATE'][-1])
+    print('L (3)', y3, n3)
+    print('H (2)', y2, n2)
     
 def proc_yn(pp2, pp3, ppj):
+    """ 支持と不支持の合計のトレンド
+    
+    """
     args = cfg['args']
     
     fig, ax = plt.subplots()
@@ -163,11 +185,11 @@ def proc_yn(pp2, pp3, ppj):
     ax.set_title('内閣支持率と不支持率の合計', fontsize=15)
     
     # ax.set_xlim([datetime(2016,4,1), datetime(2018,10,1)])
-    for pp in [ppj, pp2, pp3]:
-        for p in pp:
-            x = [dt_fm_sn(a) for a in p.db['T']]
-            y = np.array(p.db['APP_RATE']) + np.array(p.db['NAP_RATE'])
-            ax.plot(x, y, p.marker + '-', ms=4, label=p.label)
+    for db_list in [ppj, pp2, pp3]:
+        for db in db_list:
+            x = [dt_fm_sn(a) for a in db.db['T']]
+            y = np.array(db.db['APP_RATE']) + np.array(db.db['NAP_RATE'])
+            ax.plot(x, y, db.marker + '-', ms=db.size*0.5, label=db.label)
             
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     ax.grid(True)
@@ -179,16 +201,18 @@ def proc_yn(pp2, pp3, ppj):
     
     
 def proc_fc(fc_dict, pp2, pp3, ppj):
+    """ 感度係数 H, L 別
+    """
     fig, axes = plt.subplots(4, 1, figsize=(6,8))
     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.85, top=0.95, hspace=0.3)
-    for j, (yn, pp) in enumerate( [('APP_RATE', pp2), ('NAP_RATE', pp2), ('APP_RATE', pp3), ('NAP_RATE', pp3)]):
+    for j, (yn, db_list) in enumerate( [('APP_RATE', pp2), ('NAP_RATE', pp2), ('APP_RATE', pp3), ('NAP_RATE', pp3)]):
         ax = axes[j]
-        for p in pp:
-            fc = fc_dict[yn][p.label]
-            t = p.db['T']
+        for db in db_list:
+            fc = fc_dict[yn][db.label]
+            t = db.db['T']
             d = [dt_fm_sn(a) for a in t]
             f = [fc(a) for a in t]
-            ax.plot(d, f, label=p.label)
+            ax.plot(d, f, label=db.label)
         ax.set_ylim(0.9, 1.2)
         ax.grid(True)
         if (j % 2) == 0:
@@ -200,21 +224,18 @@ def proc_fc(fc_dict, pp2, pp3, ppj):
         else:
             set_date_tick(ax, (1,4,7,10), '%m', 0)
     
-def proc_hilo(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
-    flg_jnn = False
-    
-    dd2 = [dt_fm_sn(a) for a in tt2]
-    dd3 = [dt_fm_sn(a) for a in tt3]
-    ddj = [dt_fm_sn(a) for a in ttj]
-    
+def proc_hilo():
+    """ HI - LO のトレンド
+    """
     fig, axes = plt.subplots(2, 1)
     fig.subplots_adjust(left=0.16, right=0.86, bottom=0.15)
-    
     for (ndx, yn) in enumerate(['APP_RATE', 'NAP_RATE']):
-        f2 = interp(tt2, pp2_buf[yn])
-        f3 = interp(tt3, pp3_buf[yn])
-        tmin = max(tt2[0], tt3[0])
-        tmax = min(tt2[-1], tt3[-1])
+        tim2, avg2, _err, _num = tven_buf['H'][yn].by_column()
+        tim3, avg3, _err, _num = tven_buf['L'][yn].by_column()
+        f2 = interp(tim2, avg2)
+        f3 = interp(tim3, avg3)
+        tmin = max(tim2[0], tim3[0])
+        tmax = min(tim2[-1], tim3[-1])
         t_node = np.arange(tmin, tmax, 1)
         d_node = [dt_fm_sn(a) for a in t_node]
         y_node = [f2(t) - f3(t) for t in t_node]
@@ -226,84 +247,12 @@ def proc_hilo(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf):
         else:
             set_date_tick(axes[ndx], (1, 7), '%Y/%m', 30)
             
-def set_date_tick(ax, bymonth, format, rotate):
-    """ 日付軸の設定
-    
-    ax : axis
-    bymonth : 表示する月のリスト。 ex : [1, 4, 7, 10]
-    format : 表示形式。 ex : '%Y/%m'
-    rotate : [deg] 文字の回転角。
-    
-    """
-    ax.xaxis.set_major_locator(mdates.MonthLocator(bymonth=bymonth))
-    ax.xaxis.set_minor_locator(mdates.MonthLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter(format))
-    
-    # 'ax.xaxis.set_tick_params(rotation=45)' does not work ?
-    if rotate != 0:
-        for label in ax.get_xmajorticklabels():
-            label.set_rotation(rotate)
-            label.set_horizontalalignment("right")
-
 def reverse_legend(hh, ll):
     # zip object is not reersible...
     hhll = [a for a in zip(hh, ll)]
     hhll.reverse()
     hh, ll = zip(*hhll)
     return hh, ll
-    
-def smooth(t_node, v_node, w_days):
-    t0 = min(t_node)
-    
-    def _mav(t):
-        w_post = max(0, t0 + w_days - t)
-        if 1:
-            w_post = w_days
-        ndx = (t_node >= t - w_days) & (t_node <= t + w_post)
-        ans = np.mean(v_node[ndx])
-        return ans
-        
-    vv = [_mav(t) for t in t_node]
-    return vv
-    
-def calc_mav(fc_dict, yn, t_node, db_list, w_days, k_days):
-    """
-    w_days : [day]  +/-w_days のデータを使う
-    k_days : [day] 指数移動平均の時定数
-    """
-    _tt = []
-    _vv = []
-    for db in db_list:
-        _tt = _tt + list(db.db['T'])
-        vv = [a/fc_dict[yn][db.label](b) for a, b in zip(db.db[yn], db.db['T'])]
-        _vv = _vv + list(vv)
-    _tt = np.array(_tt)
-    _vv = np.array(_vv)
-    tt_min = min(_tt)
-    
-    def _mav(t):
-        # 時刻 t における窓付き指数移動平均
-        #     w_days : [day] 窓幅
-        #     k_days : [day] 時定数
-        #
-        w_post = max(0, tt_min + w_days - t)
-        if 1:
-            w_post = w_days
-        ndx = (_tt >= t - w_days) & (_tt <= t + w_post)
-        tt = _tt[ndx]
-        vv = _vv[ndx]
-        ww = np.exp(-np.abs(tt - t)/k_days)
-        ans = np.sum(ww*vv)/np.sum(ww)
-        return ans
-        
-    # 全社平均(指数移動平均)を求める。
-    #  f_mav(t) は補間関数
-    # t_node = [a for a in sorted(np.arange(t_max(db_list), t_min(db_list), -2))]
-    v_node = np.array([_mav(a) for a in t_node])
-    if 0:
-        v_node = smooth(t_node, v_node, 7)
-    
-    return v_node
     
     
 def options():
@@ -366,40 +315,31 @@ def main():
     fc_dict = {}
     for yn in ['APP_RATE', 'NAP_RATE']:
         fc_dict[yn] = {}
-        for pp in [ppj, pp2, pp3]:
+        for db_list in [ppj, pp2, pp3]:
             tstp = 10
-            tt = np.arange(t_min(pp), t_max(pp), tstp)
-            ff_step = calc_fact(pp, yn, tt, d_window=6*30)
-            for p, f in zip(pp, ff_step):
-                fc_dict[yn][p.label] = interp(tt, f)
+            tt = np.arange(t_min(db_list), t_max(db_list), tstp)
+            ff_step = calc_fact(db_list, yn, tt, d_window=6*30)
+            for db, f in zip(db_list, ff_step):
+                fc_dict[yn][db.label] = interp(tt, f)
     
     # 補正後の平均
     #
     t0 = sn_fm_dt(d0)
-    tt2 = np.arange(t0, t_max(pp2) + 1, 1)
-    tt3 = np.arange(t0, t_max(pp3) + 1, 1)
-    ttj = np.arange(t0, t_max(ppj) + 1, 1)
+    t_node2 = np.arange(t0, t_max(pp2) + 1, 1)
+    t_node3 = np.arange(t0, t_max(pp3) + 1, 1)
+    t_nodej = np.arange(t0, t_max(ppj) + 1, 1)
     
-    pp2_buf = {}
-    pp2_func = {}
     for k in ['APP_RATE', 'NAP_RATE']:
-        pp2_buf[k] = calc_mav(fc_dict, k, tt2, pp2, w_days=30, k_days=args.k_days)
-        pp2_func[k] = interp(tt2, pp2_buf[k])
+        tven_buf['H'][k] = trend_mav(fc_dict, k, t_node2, pp2, w_days=30, k_days=args.k_days)
     
-    pp3_buf = {}
-    pp3_func = {}
     for k in ['APP_RATE', 'NAP_RATE']:
-        pp3_buf[k] = calc_mav(fc_dict, k, tt3, pp3, w_days=30, k_days=args.k_days)
-        pp3_func[k] = interp(tt3, pp3_buf[k])
+        tven_buf['L'][k] = trend_mav(fc_dict, k, t_node3, pp3, w_days=30, k_days=args.k_days)
     
-    ppj_buf = {}
-    ppj_func = {}
     for k in ['APP_RATE', 'NAP_RATE']:
-        ppj_buf[k] = calc_mav(fc_dict, k, ttj, ppj, w_days=30, k_days=args.k_days)
-        ppj_func[k] = interp(ttj, ppj_buf[k])
+        tven_buf['J'][k] = trend_mav(fc_dict, k, t_nodej, ppj, w_days=30, k_days=args.k_days)
     
     if 1:
-        proc_summary(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf)
+        proc_trend()
     
     if 1:
         # 公表値/補正値/残差
@@ -410,12 +350,14 @@ def main():
             fig.text(0.15, 0.97, '支持%s(グループH)' % {'APP_RATE':'する', 'NAP_RATE':'しない'}[yn])
             fig.text(0.29, 0.62, '平均は指数移動平均')
             fig.text(0.29, 0.60, '(時定数 %d 日)' % args.k_days)
-            proc_raw_cal_sdv(fc_dict, axes, yn, pp2, tt2, pp2_buf, pp2_func, 0)
+            tt2, avg, err, num = tven_buf['H'][yn].by_column()
+            proc_raw_cal_sdv(fc_dict, axes[:,0], yn, pp2, tt2, avg)
             
             fig.text(0.65, 0.97, '支持%s(グループL)' % {'APP_RATE':'する', 'NAP_RATE':'しない'}[yn])
             fig.text(0.75, 0.62, '平均は指数移動平均')
             fig.text(0.75, 0.60, '(時定数 %d 日)' % args.k_days)
-            proc_raw_cal_sdv(fc_dict, axes, yn, pp3, tt3, pp3_buf, pp3_func, 1)
+            tt3, avg, err, num = tven_buf['L'][yn].by_column()
+            proc_raw_cal_sdv(fc_dict, axes[:,1], yn, pp3, tt3, avg)
             
             if args.gout:
                 if yn == 'APP_RATE':
@@ -430,7 +372,7 @@ def main():
         proc_fc(fc_dict, pp2, pp3, ppj)
         
     if 1:
-        proc_hilo(tt2, tt3, ttj, pp2_buf, pp3_buf, ppj_buf)
+        proc_hilo()
     
     # 表示
     #    イメージファイルの出力は proc_last() 内で行う
