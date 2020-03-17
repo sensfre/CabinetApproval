@@ -36,6 +36,11 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, db_list, tim, avg):
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
     
+    if '朝日' in [a.label for a in db_list]:
+        flg_lo = True
+    else:
+        flg_lo = False
+    
     ax =axes[1]
     ax.set_ylim(20, 70)
     ax.set_ylabel('感度補正後(太線は平均値) %')
@@ -43,9 +48,18 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, db_list, tim, avg):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         ff = [fc_dict[yn][db.label](t) for t in db.db['T']]
         vv = [a/b for a, b in zip(db.db[yn], ff)]
-        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        #ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        if flg_lo:
+            mc = 'skyblue'
+        else:
+            mc = 'darkorange'
+        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5, color=mc)
     dd = [dt_fm_sn(a) for a in tim]
-    ax.plot(dd, avg, '-', color='blue', lw=8, alpha=0.1)
+    if flg_lo:
+        ax.plot(dd, avg, '-', color='skyblue', lw=1)
+    else:
+        ax.plot(dd, avg, '-', color='darkorange', lw=1)
+    #ax.plot(dd, avg, '-', color='blue', lw=8, alpha=0.1)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -338,7 +352,7 @@ def main():
     for k in ['APP_RATE', 'NAP_RATE']:
         tven_buf['J'][k] = trend_mav(fc_dict, k, t_nodej, ppj, w_days=30, k_days=args.k_days)
     
-    if 1:
+    if 0:
         proc_trend()
     
     if 1:
@@ -357,7 +371,8 @@ def main():
             fig.text(0.75, 0.62, '平均は指数移動平均')
             fig.text(0.75, 0.60, '(時定数 %d 日)' % args.k_days)
             tt3, avg, err, num = tven_buf['L'][yn].by_column()
-            proc_raw_cal_sdv(fc_dict, axes[:,1], yn, pp3, tt3, avg)
+            #proc_raw_cal_sdv(fc_dict, axes[:,1], yn, pp3, tt3, avg)
+            proc_raw_cal_sdv(fc_dict, axes[:,0], yn, pp3, tt3, avg)
             
             if args.gout:
                 if yn == 'APP_RATE':
@@ -365,13 +380,13 @@ def main():
                 else:
                     fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 3, cfg['gout_date'])))
     
-    if 1:
+    if 0:
         proc_yn(pp2, pp3, ppj)
         
-    if 1:
+    if 0:
         proc_fc(fc_dict, pp2, pp3, ppj)
         
-    if 1:
+    if 0:
         proc_hilo()
     
     # 表示
