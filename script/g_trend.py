@@ -92,7 +92,7 @@ def proc_trend():
     ax.bar(dd3, app_lo, width=2, color=cy, label='グループL', alpha=0.5)
     if flg_jnn:
         ax.plot(ddj, app_j, '--', lw=1, color=cy, label='JNN', alpha=1.0)
-    ax.plot(dd2, app_hi, '-', lw=3, color='tomato', label='グループH')
+    ax.plot(dd2, app_hi, '-', lw=1, color='tomato', label='グループH')
     
     # Y 凡例
     ax.legend(loc='upper left', bbox_to_anchor=(0.65, 0.25))
@@ -111,7 +111,7 @@ def proc_trend():
     ax.bar(dd3, nap_lo, width=2, color=cn, label='グループL', alpha=0.5)
     if flg_jnn:
         ax.plot(ddj, nap_j, '--', lw=1, color=cn, label='JNN', alpha=1.0)
-    ax.plot(dd2, nap_hi, '-', lw=3, color='royalblue', label='グループH')
+    ax.plot(dd2, nap_hi, '-', lw=1, color='royalblue', label='グループH')
     
     # Y2 凡例 (順序を逆転)
     hh, ll = ax.get_legend_handles_labels()
