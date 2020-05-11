@@ -155,7 +155,8 @@ def proc_trend():
     y3=app_lo[-1]
     y2=app_hi[-1]
     dd = [n3, n2-n3, 100-n2-y2, y2-y3, y3]
-    cc = [cn, 'royalblue', '0.3', 'tomato', cy]
+    # cc = [cn, 'royalblue', '0.3', 'tomato', cy]
+    cc = [cn, 'deepskyblue', '0.3', 'orange', cy]
     ll = ['支持しない', 'やや', '他', 'やや', '支持する']
     ll = ['', 'やや', '他', 'やや', '']
     patches, texts = ax.pie(dd, labels=ll, counterclock=False, startangle=90,
