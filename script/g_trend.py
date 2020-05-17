@@ -101,7 +101,7 @@ def proc_trend():
     ax.set_ylim([0, 100])
     ax.tick_params(axis='y', colors=cy2)
     ax.set_yticks(range(0, 51, 10))
-    ax.text(datetime(2016, 9, 1), 30, '支持する', color=cy2, fontsize=20)
+    ax.text(datetime(2016, 9, 1), 22, '支持する', color=cy2, fontsize=20)
     ax.set_ylabel('内閣を支持する [%]', color=cy2, fontsize=14)
     ax.yaxis.set_label_coords(-0.08, 0.3)
     
@@ -122,7 +122,7 @@ def proc_trend():
     ax.set_ylim([100, 0])
     ax.tick_params(axis='y', colors=cn2)
     ax.set_yticks(range(0, 51, 10))
-    ax.text(datetime(2016, 8, 1), 20, '支持しない', color=cn2, fontsize=20)
+    ax.text(datetime(2016, 8, 1), 18, '支持しない', color=cn2, fontsize=20)
     ax.set_ylabel('内閣を支持しない [%]', color=cn2, fontsize=14)
     ax.yaxis.set_label_coords(1.08, 0.7)
     
