@@ -25,14 +25,17 @@ tven_buf = {}
 def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     """ 発表値、補正値、補正値の残差のグラフ
     """
+    cm = plt.get_cmap('rainbow')
+    
     tim, val, err, num = tven_buf[k_app_nap].by_column()
     
     ax =axes[0]
     ax.set_ylim(20, 70)
     ax.set_ylabel('調査結果(発表値) %')
-    for db in db_list:
+    for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        ax.plot(dd, db.db[k_app_nap], db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        c1 = cm(j/len(db_list))
+        ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=c1, label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))

@@ -10,18 +10,18 @@ def db_defs(d0, df, data_folder):
     
     # グループH
     pp2 = [
-          DB('yomiuri.txt', '読売', 'D', 6), # diamond
           DB('nikkei.txt', '日経', '+', 10), # plus
+          DB('yomiuri.txt', '読売', 'D', 6), # diamond
           DB('kyodo.txt', '共同', '1', 10), # tickright
           DB('fnn.txt', 'FNN', '*', 10), # star
     ]
     # グループL
     pp3 = [
-          DB('mainichi.txt', '毎日', '^', 7),
-          DB('asahi.txt', '朝日', 's', 7), # square
-          DB('ann.txt', 'ANN', '2', 10), # tickup
-          DB('jiji.txt', '時事', 'v', 7), # triangle_down
           DB('nhk.txt', 'NHK', 'o', 7), # circle
+          DB('jiji.txt', '時事', 'v', 7), # triangle_down
+          DB('ann.txt', 'ANN', '2', 10), # tickup
+          DB('asahi.txt', '朝日', 's', 7), # square
+          DB('mainichi.txt', '毎日', '^', 7),
     ]
     # グループX
     ppj = [
