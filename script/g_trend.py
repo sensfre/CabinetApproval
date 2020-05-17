@@ -89,7 +89,11 @@ def proc_trend():
     cn2 = 'darkcyan'
     
     ax = ax1
-    ax.bar(dd3, app_lo, width=2, color=cy, label='グループL', alpha=0.5)
+    if 0:
+        ax.bar(dd3, app_lo, width=2, color=cy, label='グループL', alpha=0.5)
+        ax.plot(dd3[-1], app_lo[-1], 'o', color='red', ms=3)
+    else:
+        ax.plot(dd3, app_lo, lw=1, color=cy, label='グループL', alpha=1.0)
     if flg_jnn:
         ax.plot(ddj, app_j, '--', lw=1, color=cy, label='JNN', alpha=1.0)
     ax.plot(dd2, app_hi, '-', lw=1, color='tomato', label='グループH')
@@ -108,7 +112,11 @@ def proc_trend():
     # ---< 不支持率 >---
     ax2 = ax1.twinx()
     ax = ax2
-    ax.bar(dd3, nap_lo, width=2, color=cn, label='グループL', alpha=0.5)
+    if 0:
+        ax.bar(dd3, nap_lo, width=2, color=cn, label='グループL', alpha=0.5)
+        ax.plot(dd3[-1], nap_lo[-1], 'o', color='blue', ms=2)
+    else:
+        ax.plot(dd3, nap_lo, lw=1, color=cn, label='グループL', alpha=1.0)
     if flg_jnn:
         ax.plot(ddj, nap_j, '--', lw=1, color=cn, label='JNN', alpha=1.0)
     ax.plot(dd2, nap_hi, '-', lw=1, color='royalblue', label='グループH')
