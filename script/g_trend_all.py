@@ -25,8 +25,17 @@ tven_buf = {}
 def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     """ 発表値、補正値、補正値の残差のグラフ
     """
-    cm = plt.get_cmap('rainbow')
+    args = cfg['args']
     
+    if args.rainbow:
+        cm = plt.get_cmap('rainbow')
+        def _c(j):
+            return cm(j/len(db_list))
+    else:
+        cm = plt.get_cmap('tab10')
+        def _c(j):
+            return cm(j)
+        
     tim, val, err, num = tven_buf[k_app_nap].by_column()
     
     ax =axes[0]
@@ -34,8 +43,7 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylabel('調査結果(発表値) %')
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        c1 = cm(j/len(db_list))
-        ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=c1, label=db.label, alpha=0.5)
+        ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -44,10 +52,10 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylim(20, 70)
     ax.set_ylabel('感度補正後(曲線は平均値) %')
     ax.set_ylabel('感度補正後 %')
-    for db in db_list:
+    for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
-        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tim]
     ee = err/np.sqrt(num)
     ax.fill_between(dd, val-ee, val+ee, color='blue', alpha=0.1)
@@ -59,11 +67,11 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylim(-8, 8)
     ax.set_ylabel('感度補正後の残差 %')
     
-    for db in db_list:
+    for (j, db) in enumerate(db_list):
         vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
         dv, sd = deviation(db.db['T'], vv, interp(tim, val))
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        ax.plot(dd, dv, '-', label=db.label, alpha=0.5)
+        ax.plot(dd, dv, '-', color=_c(j), label=db.label, alpha=0.5)
         
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     ax.grid(True)
@@ -289,6 +297,10 @@ def options():
     # トレンド グラフ
     opt.add_argument('-k', dest='k_days', type=int, default=10,
                 help='指数移動平均の時定数[day]  (10)')
+    
+    # 飾り
+    opt.add_argument('-r', '--rainbow', action='store_true',
+                help='虹色表示')
     
     return opt
     
