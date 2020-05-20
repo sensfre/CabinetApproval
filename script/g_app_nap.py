@@ -85,8 +85,6 @@ def options():
                 help='DB 読み込み開始日付 (2016-04-01)')
     opt.add_argument('-e', dest='db_end', default='2022-12-31',
                 help='DB 読み込み終了日付 (2022-12-31)')
-    opt.add_argument('-m', dest='ma_days', type=int, default=180,
-                help='DB の長期移動平均の窓サイズ [days]. (180)')
     
     # GOUT
     opt.add_argument('-g', '--gout', action='store_true',
@@ -119,7 +117,6 @@ def main():
     
     # DB 読み込み
     #   DB の読み込み日付の指定.
-    #   ma_days は感度解析に使うものなので、本アプリでは不用だが省略できないので.
     #
     args = cfg['args']
     d0 = _d(args.db_begin)
