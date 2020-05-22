@@ -30,7 +30,7 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     if args.rainbow:
         cm = plt.get_cmap('rainbow')
         def _c(j):
-            return cm(j/len(db_list))
+            return cm(1.0 - j/len(db_list))
     else:
         cm = plt.get_cmap('tab10')
         def _c(j):
