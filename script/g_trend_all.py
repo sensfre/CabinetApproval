@@ -183,7 +183,7 @@ def proc_trend_x(db_list, fc_dict):
     # X 軸
     ax.xaxis_date()
     ax.set_xlim(dt_fm_sn(tim[0]), dt_fm_sn(30 + tim[-1]))
-    ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))  # 日付埋め込み  ★
+    # ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))  # 日付埋め込み  ★
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     
     # Y 軸
@@ -223,7 +223,8 @@ def proc_factor(db_list, k_app_nap, k_title, fc_dict, gn_rel):
     args = cfg['args']
     
     # 図の準備
-    fig, axes = plt.subplots(5, 2, figsize=(10, 7))
+    nr = 6
+    fig, axes = plt.subplots(nr, 2, figsize=(10, 7))
     fig.text(0.10, 0.97, k_title, fontsize=16)
     fig.text(0.60, 0.97, '(オレンジ:3ヵ月移動平均  ブルー:6ヵ月移動平均)', fontsize=12)
     fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.95, wspace=0.25, hspace=0.25)
@@ -238,30 +239,42 @@ def proc_factor(db_list, k_app_nap, k_title, fc_dict, gn_rel):
         ff = calc_fact(db_list, k_app_nap, tt, m*30)
         dd = [dt_fm_sn(a) for a in tt]
         for j, (f, db) in enumerate(zip(ff, db_list)):
-            c, r = divmod(j, 5)
+            c, r = divmod(j, nr)
             if ndx == 0:
                 axes[r,c].plot(dd, f, color='orange', lw=2, alpha=0.8)
             else:
                 axes[r,c].plot(dd, f, color='blue')
             fc = [fc_dict[k_app_nap][db.label](t) for t in tt]
             axes[r,c].plot(dd, fc, '-', color='green', alpha=0.5)
-
+            axes[r,c].set_xlim(dd[0], dd[-1]+timedelta(days=30))
+            
     # タイトルや軸の設定
-    for j, db in enumerate(db_list):
-        c, r = divmod(j, 5)
-        axes[r, c].set_ylabel(db.label)
+    db_list_ax = db_list + ['']*(nr*2 - len(db_list))
+    print('db_list_ax', len(db_list_ax))
+    
+    for j, db in enumerate(db_list_ax):
+        c, r = divmod(j, nr)
+        
+        axes[r,c].set_xlim(dd[0], dd[-1]+timedelta(days=30))
+        
+        if db != '':
+            axes[r, c].set_ylabel(db.label)
         axes[r, c].set_ylim(0.8, 1.3)
         axes[r, c].grid(which='both')
         axes[r, c].grid(which='minor', alpha=0.1)
-        if r <= 3:
-            set_date_tick(axes[r,c], (1, 7), '%m', 0)
-        else:
+        
+        if r == (nr - 1):
+            print(r, c)
             set_date_tick(axes[r,c], (1, 7), '%Y/%m', 30)
+        else:
+            set_date_tick(axes[r,c], (1, 7), '%m', 0)
         
         # 調査が実施された日付をプロット
-        dd_org = [dt_fm_sn(a) for a in db.db['T']]
-        oo_org = np.ones_like(dd_org)
-        axes[r,c].plot(dd_org, oo_org, 'o', ms=4, alpha=0.2)
+        if db != '':
+            dd_org = [dt_fm_sn(a) for a in db.db['T']]
+            oo_org = np.ones_like(dd_org)
+            axes[r,c].plot(dd_org, oo_org, 'o', ms=4, alpha=0.2)
+            
     
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + gn_rel, cfg['gout_date'])))

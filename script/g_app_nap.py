@@ -35,7 +35,7 @@ def proc_last(pp2, pp3, ppj):
     fig.subplots_adjust(left=0.02, bottom=0.13, right=0.9, top=0.88)
     ax = fig.add_subplot(1,1,1)
     ax.set_aspect('equal')
-    fig.text(0.3, 0.83, '各社の最新(線分は前回からの変化)', fontsize=10,
+    fig.text(0.4, 0.83, '各社の最新(線分は前回からの変化)', fontsize=10,
                 bbox=dict(facecolor='gray', edgecolor='none', alpha=0.2))
     ax.set_xlabel('内閣を支持する [%]', fontsize=14)
     ax.set_ylabel('内閣を支持しない [%]', fontsize=14)

@@ -22,6 +22,7 @@ def db_defs(d0, df, data_folder):
           DB('ann.txt', 'ANN', '2', 10), # tickup
           DB('asahi.txt', '朝日', 's', 7), # square
           DB('mainichi.txt', '毎日', '^', 7),
+          DB('ssrc.txt', 'SSRC', 'o', 7),
     ]
     # グループX
     ppj = [
