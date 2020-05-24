@@ -160,6 +160,11 @@ def proc_trend():
     n2=nap_hi[-1]
     y3=app_lo[-1]
     y2=app_hi[-1]
+    
+    if n2 < n3:
+        n2 = n3
+    if y2 < y3:
+        y2 = y3
     dd = [n3, n2-n3, 100-n2-y2, y2-y3, y3]
     # cc = [cn, 'royalblue', '0.3', 'tomato', cy]
     # cc = [cn, 'deepskyblue', '0.3', 'orange', cy]
