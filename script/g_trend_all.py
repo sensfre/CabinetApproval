@@ -43,7 +43,12 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylabel('調査結果(発表値) %')
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, db.db[k_app_nap]) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -55,7 +60,12 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
-        ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, vv) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tim]
     ee = err/np.sqrt(num)
     ax.fill_between(dd, val-ee, val+ee, color='blue', alpha=0.1)
@@ -189,7 +199,7 @@ def proc_trend_x(db_list, fc_dict):
     # Y 軸
     ax.set_yticks(range(0, 100, 5))
     ax.set_yticks(range(0, 100, 1), minor=True)
-    ax.set_ylim([25, 60])
+    ax.set_ylim([20, 65])
     
     # タイトル/グリッド
     ax.set_title('報道 10社の平均')
@@ -356,7 +366,7 @@ def main():
         else:
             t0 = sn_fm_dt(d0)
             t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-            t_node = np.arange(t0_sunday, t_max(ppa) + 1, 7) # 移動平均を求める時刻
+            t_node = np.arange(t0_sunday, t_max(ppa) + 3, 7) # 移動平均を求める時刻
             tven_buf[k] = trend_sunday(fc_dict, k, t_node, ppa)
         
     if 1:
