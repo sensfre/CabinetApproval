@@ -31,7 +31,12 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, db_list, tim, avg):
     ax.set_ylabel('調査結果(発表値) %')
     for db in db_list:
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        ax.plot(dd, db.db[yn], db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, db.db[yn], db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, db.db[yn]) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker + '-', ms=db.size*0.5, label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -43,7 +48,13 @@ def proc_raw_cal_sdv(fc_dict, axes, yn, db_list, tim, avg):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         ff = [fc_dict[yn][db.label](t) for t in db.db['T']]
         vv = [a/b for a, b in zip(db.db[yn], ff)]
-        ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, vv, db.marker, ms=db.size*0.5, label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, vv) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker + '-', ms=db.size*0.5, label=db.label, alpha=0.5)
+        
     dd = [dt_fm_sn(a) for a in tim]
     ax.plot(dd, avg, '-', color='royalblue', lw=2) #, alpha=0.1)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
@@ -341,7 +352,7 @@ def main():
         else:
             t0 = sn_fm_dt(d0)
             t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-            t_node = np.arange(t0_sunday, t_max(pp2) + 1, 7) # 移動平均を求める時刻
+            t_node = np.arange(t0_sunday, t_max(pp2) + 3, 7) # 移動平均を求める時刻
             tven_buf['H'][k] = trend_sunday(fc_dict, k, t_node, pp2)
             
     for k in ['APP_RATE', 'NAP_RATE']:
@@ -350,7 +361,7 @@ def main():
         else:
             t0 = sn_fm_dt(d0)
             t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-            t_node = np.arange(t0_sunday, t_max(pp3) + 1, 7) # 移動平均を求める時刻
+            t_node = np.arange(t0_sunday, t_max(pp3) + 3, 7) # 移動平均を求める時刻
             tven_buf['L'][k] = trend_sunday(fc_dict, k, t_node, pp3)
             
     for k in ['APP_RATE', 'NAP_RATE']:
@@ -359,7 +370,7 @@ def main():
         else:
             t0 = sn_fm_dt(d0)
             t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-            t_node = np.arange(t0_sunday, t_max(ppj) + 1, 7) # 移動平均を求める時刻
+            t_node = np.arange(t0_sunday, t_max(ppj) + 3, 7) # 移動平均を求める時刻
             tven_buf['J'][k] = trend_sunday(fc_dict, k, t_node, ppj)
             
     if 1:
