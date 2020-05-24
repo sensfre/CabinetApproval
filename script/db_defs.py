@@ -26,6 +26,7 @@ def db_defs(d0, df, data_folder):
     # グループX
     ppj = [
           DB('jnn.txt', 'JNN', 'x', 7), # x
+          DB('ssrc.txt', 'SSRC', '>', 7), # >
     ]
     
     return pp2, pp3, ppj

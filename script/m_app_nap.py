@@ -120,12 +120,26 @@ class UPDATE:
                     y_ = np.mean([p.interp['NAP_RATE'](self.tt[i]) for p in pp])
                     self.ax.plot(x_, y_, '*', color=yc, label=g)
             else:
+                dt = dt_fm_sn(self.tt[i])
                 for p in pp:
                     if True or p.label in ['読売', '毎日', '朝日']:
                         x = p.interp['APP_RATE'](self.tt[i])
                         y = p.interp['NAP_RATE'](self.tt[i])
                         s = '%s %s' % (p.label, dt_fm_sn(p.db['T'][-1]).strftime('%m/%d'))
-                        self.ax.plot(x, y, p.marker, ms = p.size, color=yc, label=s, alpha=0.5)
+                        if p.label == '毎日':
+                            if dt < datetime(2020, 5, 20):
+                                flg_dsp = True
+                            else:
+                                flg_dsp = False
+                        elif p.label == 'SSRC':
+                            if dt > datetime(2020, 4, 1):
+                                flg_dsp = True
+                            else:
+                                flg_dsp = False
+                        else:
+                            flg_dsp = True
+                        if flg_dsp:
+                            self.ax.plot(x, y, p.marker, ms = p.size, color=yc, label=s, alpha=0.5)
                     else:
                         pass
         x_ = np.mean([p.interp['APP_RATE'](self.tt[i]) for p in self.pp3])
