@@ -111,4 +111,4 @@ optional arguments:
 ![FIG02](https://user-images.githubusercontent.com/52857956/75244070-670e5380-580e-11ea-8fd3-28a37c5af16d.png)
 
 ### g_trend_all.py
-![FIG03](https://user-images.githubusercontent.com/52857956/82770767-ac293c80-9e74-11ea-8369-d9cb032a675e.png)
+![FIG03](https://user-images.githubusercontent.com/52857956/82770999-96684700-9e75-11ea-8f5e-47ed167efa04.png)
