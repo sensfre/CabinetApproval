@@ -14,7 +14,7 @@ def db_defs(d0, df, data_folder):
           DB('yomiuri.txt', '読売', 'D', 6), # diamond
           DB('kyodo.txt', '共同', '1', 10), # tickright
           DB('fnn.txt', 'FNN', '*', 10), # star
-          DB('ssrc.txt', 'SSRC', '>', 8),
+          DB('ssrc_.txt', 'SSRC', '>', 8),
     ]
     # グループL
     pp3 = [
