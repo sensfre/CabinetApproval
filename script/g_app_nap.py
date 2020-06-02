@@ -54,18 +54,22 @@ def proc_last(pp2, pp3, ppj):
             # DB の終端からの日にちで絞る(オプショナル)
             if args.trimday and (p.db['T'][-1] < (tref - int(args.trimday))):
                 continue
+            if p.db['T'][-1] > tref - 42:
+                alp_mark, alp_line, alp_text = 1.0, 0.8, 0.8
+            else:
+                alp_mark, alp_line, alp_text = 0.2, 0.2, 0.2
             xx = p.db['APP_RATE'][-2:]
             yy = p.db['NAP_RATE'][-2:]
             st1 = dt_fm_sn(p.db['T'][-1]).strftime('%m/%d')
             st2 = dt_fm_sn(p.db['T'][-2]).strftime('%m/%d')
             s = '%s %s   (%s)' % (p.label, st1, st2)
-            ax.plot(xx, yy, '-', lw=1, color=cm(cn), alpha=0.6)
-            ax.plot(xx[-1], yy[-1], p.marker, ms=p.size, color=cm(cn), alpha=0.9, label=s)
-            # ax.text(xx[-1]+0.2, yy[-1]+0.4, p.label, fontsize=10, alpha=0.8)
-            ax.text(xx[-1]+xoff, yy[-1]+yoff, p.label, fontsize=10, alpha=0.8)
+            ax.plot(xx, yy, '-', lw=1, color=cm(cn), alpha=alp_line)
+            ax.plot(xx[-1], yy[-1], p.marker, ms=p.size, color=cm(cn), alpha=alp_mark, label=s)
+            ax.text(xx[-1]+xoff, yy[-1]+yoff, p.label, fontsize=10, alpha=alp_text)
             cn = (cn + 1) % 10
     ax.plot([0,100], [0,100], '--', alpha=0.5)
     ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))
+    fig.text(0.7, 0.3, '薄い表示は古い調査(6 週間経過)', fontsize=10)
     if args.gout:
         fn = 'Fig%s_%s.png' % (args.gout_ndx, cfg['gout_date'])
         fig.savefig(os.path.join(args.gout_folder, fn))
