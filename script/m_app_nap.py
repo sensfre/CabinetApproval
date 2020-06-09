@@ -144,7 +144,7 @@ class UPDATE:
                         pass
         x_ = np.mean([p.interp['APP_RATE'](self.tt[i]) for p in self.pp3])
         y_ = np.mean([p.interp['NAP_RATE'](self.tt[i]) for p in self.pp3])
-        self.ax.text(x_-8, y_-8, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
+        self.ax.text(x_-8, y_-10, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
         self.ax.plot([0,100], [0,100], '--', color='gray', alpha=0.3)
         
         self.set_labels()
