@@ -141,7 +141,7 @@ def proc_trend():
     
     # 注釈
     # bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
-    fig.text(0.19, 0.23, "グループ H: 読売/日経/共同/FNN の平均", fontsize=8) #, bbox=bbox)
+    fig.text(0.19, 0.23, "グループ H: 読売/日経/共同 の平均", fontsize=8) #, bbox=bbox)
     fig.text(0.19, 0.19, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=8) #, bbox=bbox)
     
     if args.k_days > 0:

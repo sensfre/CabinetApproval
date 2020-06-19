@@ -13,7 +13,6 @@ def db_defs(d0, df, data_folder):
           DB('nikkei.txt', '日経', '+', 10), # plus
           DB('yomiuri.txt', '読売', 'D', 6), # diamond
           DB('kyodo.txt', '共同', '1', 10), # tickright
-          DB('fnn.txt', 'FNN', '*', 10), # star
     ]
     # グループL
     pp3 = [

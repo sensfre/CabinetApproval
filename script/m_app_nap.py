@@ -84,7 +84,7 @@ class UPDATE:
         """
         if cfg['avg']:
             h = 0.67
-            self.fig.text(0.19, h + 0.15, "グループ H: 読売/日経/共同/FNN の平均", fontsize=10) #, bbox=bbox)
+            self.fig.text(0.19, h + 0.15, "グループ H: 読売/日経/共同 の平均", fontsize=10) #, bbox=bbox)
             self.fig.text(0.19, h + 0.12, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=10) #, bbox=bbox)
         """
         
