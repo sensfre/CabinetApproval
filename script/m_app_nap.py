@@ -84,7 +84,7 @@ class UPDATE:
         """
         if cfg['avg']:
             h = 0.67
-            self.fig.text(0.19, h + 0.15, "グループ H: 読売/日経/共同/FNN の平均", fontsize=10) #, bbox=bbox)
+            self.fig.text(0.19, h + 0.15, "グループ H: 読売/日経/共同 の平均", fontsize=10) #, bbox=bbox)
             self.fig.text(0.19, h + 0.12, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=10) #, bbox=bbox)
         """
         
@@ -120,17 +120,31 @@ class UPDATE:
                     y_ = np.mean([p.interp['NAP_RATE'](self.tt[i]) for p in pp])
                     self.ax.plot(x_, y_, '*', color=yc, label=g)
             else:
+                dt = dt_fm_sn(self.tt[i])
                 for p in pp:
                     if True or p.label in ['読売', '毎日', '朝日']:
                         x = p.interp['APP_RATE'](self.tt[i])
                         y = p.interp['NAP_RATE'](self.tt[i])
                         s = '%s %s' % (p.label, dt_fm_sn(p.db['T'][-1]).strftime('%m/%d'))
-                        self.ax.plot(x, y, p.marker, ms = p.size, color=yc, label=s, alpha=0.5)
+                        if p.label == '毎日':
+                            if dt < datetime(2020, 5, 20):
+                                flg_dsp = True
+                            else:
+                                flg_dsp = False
+                        elif p.label == 'SSRC':
+                            if dt > datetime(2020, 4, 1):
+                                flg_dsp = True
+                            else:
+                                flg_dsp = False
+                        else:
+                            flg_dsp = True
+                        if flg_dsp:
+                            self.ax.plot(x, y, p.marker, ms = p.size, color=yc, label=s, alpha=0.5)
                     else:
                         pass
         x_ = np.mean([p.interp['APP_RATE'](self.tt[i]) for p in self.pp3])
         y_ = np.mean([p.interp['NAP_RATE'](self.tt[i]) for p in self.pp3])
-        self.ax.text(x_-8, y_-8, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
+        self.ax.text(x_-8, y_-10, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
         self.ax.plot([0,100], [0,100], '--', color='gray', alpha=0.3)
         
         self.set_labels()

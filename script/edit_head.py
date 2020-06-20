@@ -51,8 +51,9 @@ def main():
     
     # 最新動向の凡例をコピペ
     #
-    im = im_last.crop((585, 53, 700, 297))
-    im_base.paste(im, (x_last - 120, 47+8))
+    im = im_last.crop((585, 53, 700+5, 297))
+    # im_base.paste(im, (x_last - 120, 47+8))
+    im_base.paste(im, (x_last - 120, 47-15))
     
     # 透過属性ありの draw を使って グループ H/L をハッチング
     #
@@ -62,13 +63,13 @@ def main():
     
     # グループ H のハッチング
     #
-    (x1, y1), (x2, y2) = (x_last - 190, 72+8), (x_last - 4, 157+8)
+    (x1, y1), (x2, y2) = (x_last - 190, 80), (x_last - 4 + 5, 146)
     draw.polygon([(x1, y1), (x1, y2), (x2, y2), (x2, y1)], (128, 0, 255, 32))
     draw.text((x1+6, y1+6), 'グループ H', fill=(0,0,0), font=font)
     
     # グループ L のハッチング
     #
-    (x1, y1), (x2, y2) = (x_last - 190, 157+8), (x_last - 4, 287-10)
+    (x1, y1), (x2, y2) = (x_last - 190, 146), (x_last - 4 + 5, 260)
     draw.polygon([(x1, y1), (x1, y2), (x2, y2), (x2, y1)], (0, 128, 64, 32))
     draw.text((x1+6, y1+6), 'グループ L', fill=(0,0,0), font=font)
     

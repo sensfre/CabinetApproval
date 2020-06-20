@@ -152,7 +152,7 @@ def proc_trend():
     
     # 注釈
     # bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
-    fig.text(0.19, 0.23, "グループ H: 読売/日経/共同/FNN の平均", fontsize=8) #, bbox=bbox)
+    fig.text(0.19, 0.23, "グループ H: 読売/日経/共同 の平均", fontsize=8) #, bbox=bbox)
     fig.text(0.19, 0.19, "グループ L: 毎日/朝日/時事/ANN/NHK の平均", fontsize=8) #, bbox=bbox)
     
     if args.k_days > 0:
@@ -171,6 +171,11 @@ def proc_trend():
     n2=nap_hi[-1]
     y3=app_lo[-1]
     y2=app_hi[-1]
+    
+    if n2 < n3:
+        n2 = n3
+    if y2 < y3:
+        y2 = y3
     dd = [n3, n2-n3, 100-n2-y2, y2-y3, y3]
     # cc = [cn, 'royalblue', '0.3', 'tomato', cy]
     # cc = [cn, 'deepskyblue', '0.3', 'orange', cy]
