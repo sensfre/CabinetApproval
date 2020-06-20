@@ -43,7 +43,12 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylabel('調査結果(発表値) %')
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, db.db[k_app_nap]) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
     ax.grid(True)
     ax.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
@@ -55,7 +60,12 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
-        ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        if db.label != 'SSRC':
+            ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        else:
+            ddvv = [a for a in zip(dd, vv) if a[0] > datetime(2020, 4, 1)]
+            dd, vv = [a for a in zip(*ddvv)]
+            ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tim]
     ee = err/np.sqrt(num)
     ax.fill_between(dd, val-ee, val+ee, color='blue', alpha=0.1)
@@ -183,13 +193,13 @@ def proc_trend_x(db_list, fc_dict):
     # X 軸
     ax.xaxis_date()
     ax.set_xlim(dt_fm_sn(tim[0]), dt_fm_sn(30 + tim[-1]))
-    ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))  # 日付埋め込み  ★
+    # ax.set_xlim(datetime(2019,2,1), datetime(2020,4,1))  # 日付埋め込み  ★
     set_date_tick(ax, (1, 7), '%Y/%m', 30)
     
     # Y 軸
     ax.set_yticks(range(0, 100, 5))
     ax.set_yticks(range(0, 100, 1), minor=True)
-    ax.set_ylim([25, 60])
+    ax.set_ylim([20, 65])
     
     # タイトル/グリッド
     ax.set_title('報道 10社の平均')
@@ -246,27 +256,36 @@ def proc_factor(db_list, k_app_nap, k_title, fc_dict, gn_rel):
                 axes[r,c].plot(dd, f, color='blue')
             fc = [fc_dict[k_app_nap][db.label](t) for t in tt]
             axes[r,c].plot(dd, fc, '-', color='green', alpha=0.5)
-
+            axes[r,c].set_xlim(dd[0], dd[-1]+timedelta(days=30))
+            
     # タイトルや軸の設定
-    for j in range(nr*2):
+    db_list_ax = db_list + ['']*(nr*2 - len(db_list))
+    print('db_list_ax', len(db_list_ax))
+    
+    for j, db in enumerate(db_list_ax):
         c, r = divmod(j, nr)
-        if j < len(db_list):
-            db = db_list[j]
+        
+        axes[r,c].set_xlim(dd[0], dd[-1]+timedelta(days=30))
+        
+        if db != '':
             axes[r, c].set_ylabel(db.label)
-            # 調査が実施された日付をプロット
+        axes[r, c].set_ylim(0.8, 1.3)
+        axes[r, c].grid(which='both')
+        axes[r, c].grid(which='minor', alpha=0.1)
+        
+        if r == (nr - 1):
+            print(r, c)
+            set_date_tick(axes[r,c], (1, 7), '%Y/%m', 30)
+        else:
+            set_date_tick(axes[r,c], (1, 7), '%m', 0)
+        
+        # 調査が実施された日付をプロット
+        if db != '':
             dd_org = [dt_fm_sn(a) for a in db.db['T']]
             oo_org = np.ones_like(dd_org)
             axes[r,c].plot(dd_org, oo_org, 'o', ms=4, alpha=0.2)
             
-        axes[r, c].set_xlim(dd[0], dt_fm_sn(tf + 30))
-        axes[r, c].set_ylim(0.8, 1.3)
-        axes[r, c].grid(which='both')
-        axes[r, c].grid(which='minor', alpha=0.1)
-        if r != (nr - 1):
-            set_date_tick(axes[r,c], (1, 7), '%m', 0)
-        else:
-            set_date_tick(axes[r,c], (1, 7), '%Y/%m', 30)
-            
+    
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + gn_rel, cfg['gout_date'])))
     
@@ -347,7 +366,7 @@ def main():
         else:
             t0 = sn_fm_dt(d0)
             t0_sunday = t0 + (6 - d0.weekday())  # 0:月曜  6:日曜
-            t_node = np.arange(t0_sunday, t_max(ppa) + 1, 7) # 移動平均を求める時刻
+            t_node = np.arange(t0_sunday, t_max(ppa) + 3, 7) # 移動平均を求める時刻
             tven_buf[k] = trend_sunday(fc_dict, k, t_node, ppa)
         
     if 1:
