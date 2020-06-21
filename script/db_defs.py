@@ -3,6 +3,9 @@
 from datetime import datetime, timedelta
 from polldb import DB
 
+_SSRC = False
+#_SSRC = True
+
 def db_defs(d0, df, data_folder):
     
     DB.set_span(d0, df) # 解析期間
@@ -13,9 +16,11 @@ def db_defs(d0, df, data_folder):
           DB('nikkei.txt', '日経', '+', 10), # plus
           DB('yomiuri.txt', '読売', 'D', 6), # diamond
           DB('kyodo.txt', '共同', '1', 10), # tickright
-          DB('fnn.txt', 'FNN', '*', 10), # star
-          DB('ssrc_.txt', 'SSRC', '>', 8),
+          
     ]
+    if _SSRC:
+        pp2.append(DB('ssrc_.txt', 'SSRC', '>', 7)) # >
+    
     # グループL
     pp3 = [
           DB('nhk.txt', 'NHK', 'o', 7), # circle
@@ -27,7 +32,9 @@ def db_defs(d0, df, data_folder):
     # グループX
     ppj = [
           DB('jnn.txt', 'JNN', 'x', 7), # x
-          DB('ssrc.txt', 'SSRC', '>', 7), # >
     ]
+    if not _SSRC:
+        ppj.append(DB('ssrc.txt', 'SSRC', '>', 7)) # >
+    
     
     return pp2, pp3, ppj
