@@ -181,7 +181,7 @@ def proc_trend():
     # cc = [cn, 'deepskyblue', '0.3', 'orange', cy]
     cc = [cn, 'royalblue', '0.7', 'tomato', cy]
     ll = ['支持しない', 'やや', '他', 'やや', '支持する']
-    ll = ['', 'やや支持しない', 'その他', 'やや支持する', '']
+    ll = ['', 'やや', '他', 'やや', '']
     patches, texts = ax.pie(dd, labels=ll, counterclock=False, startangle=90,
         colors=cc, labeldistance=0.7,
         textprops={'color':'white'},
