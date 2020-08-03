@@ -35,7 +35,8 @@ def proc_last(pp2, pp3, ppj):
     fig.subplots_adjust(left=0.02, bottom=0.13, right=0.9, top=0.88)
     ax = fig.add_subplot(1,1,1)
     ax.set_aspect('equal')
-    fig.text(0.4, 0.83, '各社の最新(線分は前回からの変化)', fontsize=10,
+    fig.text(0.50, 0.847, '線分は前回からの変化', fontsize=10,
+    #fig.text(0.4, 0.14, '各社の最新(線分は前回からの変化)', fontsize=10,
                 bbox=dict(facecolor='gray', edgecolor='none', alpha=0.2))
     ax.set_xlabel('内閣を支持する [%]', fontsize=14)
     ax.set_ylabel('内閣を支持しない [%]', fontsize=14)
@@ -48,6 +49,7 @@ def proc_last(pp2, pp3, ppj):
     # 各社最新
     cm = plt.get_cmap('tab10')
     cn = 0
+    flg_old = False
     for (pp, col, ab) in [(ppj, 'brown', 'C'), (pp2, 'indigo', 'グループH'), (pp3, 'green', 'グループL')]:
         for p in pp:
             tref = max(t_max(ppj), t_max(pp2), t_max(pp3))
@@ -58,6 +60,7 @@ def proc_last(pp2, pp3, ppj):
                 alp_mark, alp_line, alp_text = 1.0, 0.8, 0.8
             else:
                 alp_mark, alp_line, alp_text = 0.2, 0.2, 0.2
+                flg_old = True
             xx = p.db['APP_RATE'][-2:]
             yy = p.db['NAP_RATE'][-2:]
             st1 = dt_fm_sn(p.db['T'][-1]).strftime('%m/%d')
@@ -69,7 +72,8 @@ def proc_last(pp2, pp3, ppj):
             cn = (cn + 1) % 10
     ax.plot([0,100], [0,100], '--', alpha=0.5)
     ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.02))
-    fig.text(0.7, 0.3, '薄い表示は古い調査(6 週間経過)', fontsize=10)
+    if flg_old:
+        fig.text(0.7, 0.3, '薄い表示は古い調査(6 週間経過)', fontsize=10)
     if args.gout:
         fn = 'Fig%s_%s.png' % (args.gout_ndx, cfg['gout_date'])
         fig.savefig(os.path.join(args.gout_folder, fn))
