@@ -15,11 +15,10 @@ def db_defs(d0, df, data_folder):
     pp2 = [
           DB('nikkei.txt', '日経', '+', 10), # plus
           DB('yomiuri.txt', '読売', 'D', 6), # diamond
-          DB('kyodo.txt', '共同', '1', 10), # tickright
+          DB('kyodo.txt', '共同', '1', 10),  # tickright
+          DB('ssrc.txt', 'SSRC', '>', 7),   # >
           
     ]
-    if _SSRC:
-        pp2.append(DB('ssrc_.txt', 'SSRC', '>', 7)) # >
     
     # グループL
     pp3 = [
@@ -27,14 +26,10 @@ def db_defs(d0, df, data_folder):
           DB('jiji.txt', '時事', 'v', 7), # triangle_down
           DB('ann.txt', 'ANN', '2', 10), # tickup
           DB('asahi.txt', '朝日', 's', 7), # square
-          DB('mainichi.txt', '毎日', '^', 7),
     ]
     # グループX
     ppj = [
           DB('jnn.txt', 'JNN', 'x', 7), # x
     ]
-    if not _SSRC:
-        ppj.append(DB('ssrc.txt', 'SSRC', '>', 7)) # >
-    
     
     return pp2, pp3, ppj

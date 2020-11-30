@@ -63,13 +63,13 @@ def main():
     
     # グループ H のハッチング
     #
-    (x1, y1), (x2, y2) = (x_last - 190, 80), (x_last - 4 + 5, 146)
+    (x1, y1), (x2, y2) = (x_last - 190, 80-22), (x_last - 4 + 5, 146)
     draw.polygon([(x1, y1), (x1, y2), (x2, y2), (x2, y1)], (128, 0, 255, 32))
     draw.text((x1+6, y1+6), 'グループ H', fill=(0,0,0), font=font)
     
     # グループ L のハッチング
     #
-    (x1, y1), (x2, y2) = (x_last - 190, 146), (x_last - 4 + 5, 260)
+    (x1, y1), (x2, y2) = (x_last - 190, 146), (x_last - 4 + 5, 260 - 20)
     draw.polygon([(x1, y1), (x1, y2), (x2, y2), (x2, y1)], (0, 128, 64, 32))
     draw.text((x1+6, y1+6), 'グループ L', fill=(0,0,0), font=font)
     
