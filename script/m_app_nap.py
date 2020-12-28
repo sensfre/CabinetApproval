@@ -70,11 +70,18 @@ class UPDATE:
         df = _d(args.db_end)
         self.pp2, self.pp3, self.ppj = db_defs(d0, df, args.db_folder)
         
-        # 評価日時 (10 日毎)
-        self.t0 = sn_fm_dt(d0)
-        self.tf = max(t_max(self.pp2), t_max(self.pp3), t_max(self.ppj)) + 10
-        self.tt = [a for a in range(int(self.t0), int(self.tf), 10)] + [int(self.tf)]*10  # 終端に tf を 10 回繰り返し。
-        
+        if 0:
+            # 評価日時 (10 日毎)
+            self.t0 = sn_fm_dt(d0)
+            self.tf = max(t_max(self.pp2), t_max(self.pp3), t_max(self.ppj)) + 10
+            self.tt = [a for a in range(int(self.t0), int(self.tf), 10)] + [int(self.tf)]*10  # 終端に tf を 10 回繰り返し。
+        else:
+            dt = 2
+            # 評価日時 (dt 日毎)
+            self.t0 = sn_fm_dt(d0)
+            self.tf = max(t_max(self.pp2), t_max(self.pp3), t_max(self.ppj)) + dt
+            self.tt = [a for a in range(int(self.t0), int(self.tf), dt)] + [int(self.tf)]*10  # 終端に tf を 10 回繰り返し。
+
         # figure & axis 生成
         #
         self.fig = fig
@@ -144,7 +151,8 @@ class UPDATE:
                         pass
         x_ = np.mean([p.interp['APP_RATE'](self.tt[i]) for p in self.pp3])
         y_ = np.mean([p.interp['NAP_RATE'](self.tt[i]) for p in self.pp3])
-        self.ax.text(x_-8, y_-10, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
+        # self.ax.text(x_-8, y_-10, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
+        self.ax.text(x_-8, y_-14, nen_tsuki(dt_fm_sn(self.tt[i])), alpha=0.5, fontsize=16)
         self.ax.plot([0,100], [0,100], '--', color='gray', alpha=0.3)
         
         self.set_labels()
