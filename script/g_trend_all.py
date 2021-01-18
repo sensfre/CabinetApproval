@@ -43,10 +43,10 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     ax.set_ylabel('調査結果(発表値) %')
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
-        if db.label != 'SSRC':
-            ax.plot(dd, db.db[k_app_nap], db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
+        if not db.label in  ['SSRC', '朝日']:
+            ax.plot(dd, db.db[k_app_nap], db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
         else:
-            ddvv = [a for a in zip(dd, db.db[k_app_nap]) if a[0] > datetime(2020, 4, 1)]
+            ddvv = [a for a in zip(dd, db.db[k_app_nap]) if a[0] > datetime(2020, 1, 1)]
             dd, vv = [a for a in zip(*ddvv)]
             ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     set_date_tick(ax, (1,4,7,10), '%m', 0)
@@ -60,10 +60,10 @@ def proc_raw_cal_sdv(fc_dict, axes, k_app_nap, db_list):
     for (j, db) in enumerate(db_list):
         dd = [dt_fm_sn(a) for a in db.db['T']]
         vv = [a/fc_dict[k_app_nap][db.label](b) for a, b in zip(db.db[k_app_nap], db.db['T'])]
-        if db.label != 'SSRC':
+        if not db.label in  ['SSRC', '朝日']:
             ax.plot(dd, vv, db.marker, ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
         else:
-            ddvv = [a for a in zip(dd, vv) if a[0] > datetime(2020, 4, 1)]
+            ddvv = [a for a in zip(dd, vv) if a[0] > datetime(2020, 1, 1)]
             dd, vv = [a for a in zip(*ddvv)]
             ax.plot(dd, vv, db.marker+'-', ms=db.size*0.5, color=_c(j), label=db.label, alpha=0.5)
     dd = [dt_fm_sn(a) for a in tim]
