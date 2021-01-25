@@ -244,11 +244,15 @@ def proc_factor(db_list, k_app_nap, k_title, fc_dict, gn_rel):
     tf = t_max(db_list)
     
     # 移動平均の窓幅をいくつか選んで感度のトレンドを描画(調査会社毎)
+    buf = {}
     for ndx, m in enumerate([3, 6]):  # window size (m-month)
         tt = np.arange(t0 + 6*30, tf, 7)
         ff = calc_fact(db_list, k_app_nap, tt, m*30)
         dd = [dt_fm_sn(a) for a in tt]
         for j, (f, db) in enumerate(zip(ff, db_list)):
+            if m == 3:
+                buf[db.label] = f
+                buf['date'] = dd
             c, r = divmod(j, nr)
             if ndx == 0:
                 axes[r,c].plot(dd, f, color='orange', lw=2, alpha=0.8)
@@ -289,6 +293,7 @@ def proc_factor(db_list, k_app_nap, k_title, fc_dict, gn_rel):
     if args.gout:
         fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + gn_rel, cfg['gout_date'])))
     
+    return buf
     
 def options():
     """ オプション定義
@@ -398,8 +403,35 @@ def main():
              fig.savefig(os.path.join(args.gout_folder, 'Fig%d_%s.png' % (args.gout_ndx + 2, cfg['gout_date'])))
         
     if 1:
-        proc_factor(ppa, 'APP_RATE', '内閣 支持率 感度係数', fc_dict, 3)
-        proc_factor(ppa, 'NAP_RATE', '内閣 不支持率 感度係数', fc_dict, 4)
+        buf_app_ = proc_factor(ppa, 'APP_RATE', '内閣 支持率 感度係数', fc_dict, 3)
+        buf_nap_ = proc_factor(ppa, 'NAP_RATE', '内閣 不支持率 感度係数', fc_dict, 4)
+        
+        buf_app = {}
+        buf_nap = {}
+        dmin = datetime(2020, 10, 1)
+        for k in buf_app_:
+            if k == 'date': continue
+            buf_app[k] = [f for (d, f) in zip(buf_app_['date'], buf_app_[k]) if d >= dmin]
+            
+        for k in buf_nap_:
+            if k == 'date': continue
+            buf_nap[k] = [f for (d, f) in zip(buf_nap_['date'], buf_nap_[k]) if d >= dmin]
+            
+        fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(1, 1, 1)
+        for k in buf_app.keys():
+            if k != 'date':
+                ax.plot(buf_app[k], buf_nap[k], '-', label=k)
+                ax.plot(buf_app[k][-1], buf_nap[k][-1], 'o')
+                ax.text(buf_app[k][-1], buf_nap[k][-1], k)
+        ax.set_xlim(0.5, 1.5)
+        ax.set_ylim(0.5, 1.5)
+        ax.set_xlabel('支持率の感度係数')
+        ax.set_ylabel('不支持率の感度係数')
+        ax.set_title('報道各社の感度係数 (%s～)' % (dmin.strftime('%Y/%m')))
+        ax.axis('equal')
+        ax.legend()
+        ax.grid(True)
         
     # 表示
     #    イメージファイルの出力は proc_last() 内で行う
